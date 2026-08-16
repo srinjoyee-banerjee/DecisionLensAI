@@ -1,6 +1,7 @@
 Flask
 flask-cors
 gunicorn
+pandas
 numpy
-sentence-transformers
+scikit-learn
 google-genai
