@@ -1,92 +1,293 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Decision Report | DecisionLens</title>
-    <link rel="stylesheet" href="style.css">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Decision Report | DecisionLens AI</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
 </head>
+
 
 <body>
 
+
+<!-- =========================================================
+     NAVIGATION
+========================================================= -->
+
 <nav class="navbar">
+
     <div class="brand">
         DECISION<span>LENS</span>
     </div>
 
     <div class="navlinks">
-        <a href="/">Home</a>
-        <a href="dashboard.html">Workspace</a>
-        <a class="active" href="result.html">Results</a>
+
+        <a href="/">
+            Home
+        </a>
+
+        <a href="dashboard.html">
+            Workspace
+        </a>
+
+        <a
+            class="active"
+            href="result.html"
+        >
+            Results
+        </a>
+
     </div>
+
 </nav>
 
 
+
+<!-- =========================================================
+     MAIN REPORT
+========================================================= -->
+
 <main class="results">
+
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
 
     <div class="report-header">
 
         <div>
-            <div class="eyebrow">AI DECISION REPORT</div>
-            <h1>Decision Intelligence</h1>
+
+            <div class="eyebrow">
+                AI DECISION REPORT
+            </div>
+
+            <h1>
+                Decision Intelligence
+            </h1>
+
             <p id="decisionText">
                 Your decision analysis will appear here.
             </p>
+
         </div>
 
+
         <div class="confidence">
-            <span>AI CONFIDENCE</span>
-            <strong id="confidence">—</strong>
+
+            <span>
+                AI CONFIDENCE
+            </span>
+
+            <strong id="confidence">
+                —
+            </strong>
+
         </div>
 
     </div>
 
 
+
+    <!-- =====================================================
+         RECOMMENDED OPTION
+    ====================================================== -->
+
     <section class="recommendation">
 
         <div class="section-label">
-            RECOMMENDATION
+            RECOMMENDED OPTION
         </div>
 
-        <h2 id="recommendation">
-            Analyzing...
-        </h2>
 
-        <p id="summary">
+        <div class="winner-box">
+
+            <div class="winner-content">
+
+                <span class="winner-label">
+                    DECISIONLENS RECOMMENDS
+                </span>
+
+                <h2 id="recommendedOption">
+                    Analyzing...
+                </h2>
+
+            </div>
+
+
+            <div class="winner-score">
+
+                <span>
+                    SCORE
+                </span>
+
+                <strong id="winnerScore">
+                    —
+                </strong>
+
+                <small>
+                    / 100
+                </small>
+
+            </div>
+
+        </div>
+
+
+        <div class="recommendation-text">
+
+            <h3>
+                WHY THIS OPTION?
+            </h3>
+
+            <p id="recommendation">
+                Analyzing your decision...
+            </p>
+
+        </div>
+
+
+        <p
+            id="summary"
+            class="summary"
+        >
             Generating your decision intelligence report.
         </p>
 
     </section>
 
 
-    <section class="result-grid">
 
-        <div class="result-card">
-            <div class="result-number blue">01</div>
-            <h3>KEY FACTORS</h3>
-            <ul id="factors"></ul>
+    <!-- =====================================================
+         OPTION COMPARISON
+    ====================================================== -->
+
+    <section class="comparison-section">
+
+        <div class="section-label">
+            OPTION COMPARISON
         </div>
 
-        <div class="result-card">
-            <div class="result-number red">02</div>
-            <h3>RISKS</h3>
-            <ul id="risks"></ul>
-        </div>
 
-        <div class="result-card">
-            <div class="result-number blue">03</div>
-            <h3>OPPORTUNITIES</h3>
-            <ul id="opportunities"></ul>
-        </div>
+        <div
+            id="optionComparison"
+            class="comparison-grid"
+        >
 
-        <div class="result-card">
-            <div class="result-number red">04</div>
-            <h3>TRADE-OFFS</h3>
-            <ul id="tradeoffs"></ul>
+            <!-- Generated dynamically -->
+
         </div>
 
     </section>
 
+
+
+    <!-- =====================================================
+         ANALYSIS GRID
+    ====================================================== -->
+
+    <section class="result-grid">
+
+
+        <!-- KEY FACTORS -->
+
+        <div class="result-card">
+
+            <div class="result-number blue">
+                01
+            </div>
+
+            <h3>
+                KEY FACTORS
+            </h3>
+
+            <ul id="factors">
+
+            </ul>
+
+        </div>
+
+
+
+        <!-- RISKS -->
+
+        <div class="result-card">
+
+            <div class="result-number red">
+                02
+            </div>
+
+            <h3>
+                RISKS
+            </h3>
+
+            <ul id="risks">
+
+            </ul>
+
+        </div>
+
+
+
+        <!-- OPPORTUNITIES -->
+
+        <div class="result-card">
+
+            <div class="result-number blue">
+                03
+            </div>
+
+            <h3>
+                OPPORTUNITIES
+            </h3>
+
+            <ul id="opportunities">
+
+            </ul>
+
+        </div>
+
+
+
+        <!-- TRADE-OFFS -->
+
+        <div class="result-card">
+
+            <div class="result-number red">
+                04
+            </div>
+
+            <h3>
+                TRADE-OFFS
+            </h3>
+
+            <ul id="tradeoffs">
+
+            </ul>
+
+        </div>
+
+
+    </section>
+
+
+
+    <!-- =====================================================
+         RETRIEVED INTELLIGENCE
+    ====================================================== -->
 
     <section class="evidence">
 
@@ -94,32 +295,87 @@
             RETRIEVED INTELLIGENCE
         </div>
 
-        <div id="evidenceList"></div>
+
+        <div class="evidence-header">
+
+            <div>
+
+                <h2>
+                    Decision Knowledge Base
+                </h2>
+
+                <p id="evidenceStatus">
+                    Searching relevant intelligence...
+                </p>
+
+            </div>
+
+            <div
+                id="evidenceCount"
+                class="evidence-count"
+            >
+                0 SOURCES
+            </div>
+
+        </div>
+
+
+        <div id="evidenceList">
+
+        </div>
 
     </section>
 
 
+
+    <!-- =====================================================
+         ACTIONS
+    ====================================================== -->
+
     <div class="bottom-actions">
 
-        <a href="dashboard.html" class="primary-btn">
+        <a
+            href="dashboard.html"
+            class="primary-btn"
+        >
             NEW DECISION →
         </a>
 
-        <a href="/" class="secondary-btn">
+
+        <a
+            href="/"
+            class="secondary-btn"
+        >
             HOME
         </a>
 
     </div>
 
+
 </main>
 
 
+
+<!-- =========================================================
+     FOOTER
+========================================================= -->
+
 <footer>
-    DECISIONLENS AI <span>•</span> RAG-POWERED DECISION SUPPORT
+
+    DECISIONLENS AI
+
+    <span>
+        •
+    </span>
+
+    RAG-POWERED DECISION SUPPORT
+
 </footer>
+
 
 
 <script src="script.js"></script>
 
 </body>
+
 </html>
