@@ -1,101 +1,120 @@
 // ============================================================
 // DECISIONLENS AI
-// FRONTEND DECISION ANALYZER ENGINE
+// FRONTEND INTELLIGENCE CONTROLLER
 // ============================================================
 
 
 
-const analyzeBtn = document.getElementById(
-    "analyzeBtn"
+const analyzeBtn =
+document.getElementById(
+"analyzeBtn"
 );
 
-const decisionInput = document.getElementById(
-    "decisionInput"
-);
 
-const btnText = document.getElementById(
-    "btnText"
-);
-
-const errorBox = document.getElementById(
-    "errorBox"
+const decisionInput =
+document.getElementById(
+"decisionInput"
 );
 
 
 
+const btnText =
+document.getElementById(
+"btnText"
+);
 
-// ============================================================
-// DASHBOARD PAGE
-// ============================================================
+
+
+const errorBox =
+document.getElementById(
+"errorBox"
+);
+
+
+
 
 
 if(analyzeBtn){
 
 
+
 analyzeBtn.addEventListener(
+
 "click",
-async function(){
+
+async()=>{
 
 
-const decision =
+
+let question =
 decisionInput.value.trim();
 
 
 
-if(!decision){
+
+if(question.length < 5){
 
 
 errorBox.innerHTML =
-"Please describe your decision first.";
+"Please enter a meaningful decision.";
 
 
 return;
-
 
 }
 
 
 
 
+
 btnText.innerHTML =
-"ANALYZING...";
+"AI THINKING...";
+
 
 
 analyzeBtn.disabled=true;
+
 
 
 errorBox.innerHTML="";
 
 
 
+
+
+
+
 try{
+
 
 
 const response =
 await fetch(
+
 "/api/analyze",
+
 {
+
 
 method:"POST",
 
-headers:
-{
+
+headers:{
+
 
 "Content-Type":
 "application/json"
 
+
 },
 
 
-body:
-JSON.stringify(
-{
+body:JSON.stringify({
 
-decision:decision
+decision:question
 
-}
+})
 
-)
 
 }
 
@@ -104,20 +123,26 @@ decision:decision
 
 
 
-const data =
+
+
+const result =
 await response.json();
 
 
 
 
 
-if(!response.ok ||
-data.error){
+
+
+if(!response.ok || result.error){
 
 
 throw new Error(
-data.error ||
+
+result.error ||
+
 "Analysis failed"
+
 );
 
 
@@ -126,23 +151,48 @@ data.error ||
 
 
 
-// save complete AI report
+
+
+
+// SAVE AI REPORT
+
 
 localStorage.setItem(
 
 "decisionResult",
 
-JSON.stringify(data)
+JSON.stringify(result)
 
 );
 
 
 
 
-// redirect
+
+
+
+
+btnText.innerHTML =
+"COMPLETE";
+
+
+
+
+
+setTimeout(()=>{
+
 
 window.location.href =
 "result.html";
+
+
+
+},500);
+
+
+
+
+
 
 
 
@@ -151,14 +201,13 @@ window.location.href =
 catch(error){
 
 
-console.error(
-"DecisionLens Error:",
-error
-);
+
+console.error(error);
 
 
 
 errorBox.innerHTML =
+
 error.message;
 
 
@@ -170,253 +219,16 @@ btnText.innerHTML =
 analyzeBtn.disabled=false;
 
 
-}
-
-
-
-});
-
 
 }
-
-
-
-
-
-
-
-// ============================================================
-// RESULT PAGE ENGINE
-// ============================================================
-
-
-
-function loadDecisionResult(){
-
-
-
-const result =
-localStorage.getItem(
-"decisionResult"
-);
-
-
-
-if(!result){
-
-return;
-
-}
-
-
-
-const data =
-JSON.parse(result);
-
-
-
-
-
-// Main decision
-
-
-const decisionText =
-document.getElementById(
-"decisionText"
-);
-
-
-if(decisionText){
-
-decisionText.innerHTML =
-data.decision_intelligence ||
-data.decision ||
-"Decision Analysis";
-
-}
-
-
-
-
-// Recommendation
-
-
-const recommendation =
-document.getElementById(
-"recommendation"
-);
-
-
-if(recommendation){
-
-recommendation.innerHTML =
-data.recommendation ||
-"--";
-
-}
-
-
-
-
-
-// Confidence
-
-
-const confidence =
-document.getElementById(
-"confidence"
-);
-
-
-if(confidence){
-
-confidence.innerHTML =
-(data.confidence || 0)
-+
-"%";
-
-}
-
-
-
-
-
-// Summary
-
-
-const summary =
-document.getElementById(
-"summary"
-);
-
-
-if(summary){
-
-summary.innerHTML =
-data.primary_reason ||
-data.summary ||
-"";
-
-}
-
-
-
-
-
-renderList(
-"why",
-data.why
-);
-
-
-renderList(
-"whyNot",
-data.why_not
-);
-
-
-renderList(
-"advantages",
-data.advantages
-);
-
-
-renderList(
-"disadvantages",
-data.disadvantages
-);
-
-
-renderList(
-"tradeoffs",
-data.tradeoffs
-);
 
 
 
 }
 
 
-
-
-
-function renderList(
-elementId,
-items
-){
-
-
-
-const box =
-document.getElementById(
-elementId
 );
 
-
-
-if(!box){
-
-return;
-
-}
-
-
-
-box.innerHTML="";
-
-
-
-if(!items ||
-items.length===0){
-
-box.innerHTML =
-"<li>No information available</li>";
-
-return;
-
-}
-
-
-
-
-items.forEach(
-(item)=>{
-
-
-const li =
-document.createElement(
-"li"
-);
-
-
-li.innerText=item;
-
-
-box.appendChild(li);
-
-
-
-}
-
-);
-
-
-}
-
-
-
-
-
-// Run only on result page
-
-if(
-window.location.pathname.includes(
-"result.html"
-)
-){
-
-
-loadDecisionResult();
 
 
 }
