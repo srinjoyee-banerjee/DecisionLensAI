@@ -1,476 +1,339 @@
-import os
-import json
-import re
-
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-
-import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-
-from google import genai
+import json
+import os
+import re
 
 
 # ============================================================
-# CONFIG
+# APP
 # ============================================================
+
+app = Flask(__name__)
+CORS(app)
+
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
-KB_PATH = os.path.join(BASE_DIR, "knowledge_base.json")
-
-app = Flask(
-    __name__,
-    static_folder=FRONTEND_DIR,
-    static_url_path=""
-)
-
-CORS(app)
+KB_FILE = os.path.join(BASE_DIR, "knowledge_base.json")
 
 
 # ============================================================
 # KNOWLEDGE BASE
 # ============================================================
 
-try:
-    with open(KB_PATH, "r", encoding="utf-8") as f:
-        KNOWLEDGE = json.load(f)
+def load_knowledge_base():
 
-except Exception as e:
-
-    print("Knowledge base error:", e)
-    KNOWLEDGE = []
-
-
-DOCUMENTS = [
-    str(item.get("text", ""))
-    for item in KNOWLEDGE
-]
-
-
-# ============================================================
-# TF-IDF RAG
-# ============================================================
-
-if DOCUMENTS:
-
-    vectorizer = TfidfVectorizer(
-        stop_words="english",
-        ngram_range=(1, 2),
-        max_features=10000
-    )
-
-    DOCUMENT_MATRIX = vectorizer.fit_transform(
-        DOCUMENTS
-    )
-
-else:
-
-    vectorizer = None
-    DOCUMENT_MATRIX = None
-
-
-def retrieve(query, top_k=3):
-
-    if not DOCUMENTS:
+    if not os.path.exists(KB_FILE):
         return []
 
-    query_vector = vectorizer.transform([query])
+    try:
 
-    scores = cosine_similarity(
-        query_vector,
-        DOCUMENT_MATRIX
-    )[0]
+        with open(
+            KB_FILE,
+            "r",
+            encoding="utf-8"
+        ) as file:
 
-    indices = np.argsort(scores)[::-1][:top_k]
+            data = json.load(file)
+
+        if isinstance(data, list):
+            return data
+
+        if isinstance(data, dict):
+
+            for key in [
+                "documents",
+                "knowledge",
+                "entries",
+                "data",
+                "items"
+            ]:
+
+                if key in data and isinstance(data[key], list):
+                    return data[key]
+
+            return [data]
+
+    except Exception as error:
+
+        print("Knowledge base error:", error)
+
+        return []
+
+
+KNOWLEDGE_BASE = load_knowledge_base()
+
+
+# ============================================================
+# TEXT HELPERS
+# ============================================================
+
+def extract_text(item):
+
+    if isinstance(item, str):
+        return item
+
+    if isinstance(item, dict):
+
+        parts = []
+
+        for key in [
+            "title",
+            "content",
+            "text",
+            "description",
+            "summary",
+            "answer"
+        ]:
+
+            value = item.get(key)
+
+            if value:
+                parts.append(str(value))
+
+        return " ".join(parts)
+
+    return str(item)
+
+
+def retrieve(decision, limit=5):
+
+    decision_words = set(
+        re.findall(
+            r"[a-zA-Z]{3,}",
+            decision.lower()
+        )
+    )
+
+    scored = []
+
+    for item in KNOWLEDGE_BASE:
+
+        text = extract_text(item)
+
+        words = set(
+            re.findall(
+                r"[a-zA-Z]{3,}",
+                text.lower()
+            )
+        )
+
+        score = len(
+            decision_words.intersection(words)
+        )
+
+        if score > 0:
+            scored.append(
+                (score, item)
+            )
+
+    scored.sort(
+        key=lambda x: x[0],
+        reverse=True
+    )
 
     results = []
 
-    for index in indices:
+    for score, item in scored[:limit]:
 
-        item = dict(
-            KNOWLEDGE[int(index)]
-        )
+        if isinstance(item, dict):
 
-        item["score"] = round(
-            float(scores[int(index)]),
-            4
-        )
+            results.append({
+                "title":
+                    item.get(
+                        "title",
+                        "Retrieved intelligence"
+                    ),
 
-        results.append(item)
+                "content":
+                    item.get(
+                        "content",
+                        item.get(
+                            "text",
+                            item.get(
+                                "description",
+                                ""
+                            )
+                        )
+                    )
+            })
+
+        else:
+
+            results.append({
+                "title":
+                    "Knowledge Base",
+
+                "content":
+                    str(item)
+            })
 
     return results
 
 
 # ============================================================
-# AGENT
+# SIMPLE AI DECISION ENGINE
 # ============================================================
 
-def agent_plan(query):
+def analyze_decision(decision):
 
-    q = query.lower()
+    retrieved = retrieve(decision)
 
-    tools = ["RAG"]
+    lower = decision.lower()
 
-    numerical_words = [
-        "cost",
-        "price",
-        "budget",
-        "percentage",
-        "salary",
-        "roi",
-        "saving",
-        "score",
-        "calculate",
-        "how much"
+    factors = [
+        "Alignment with the primary objective",
+        "Long-term value and expected impact",
+        "Cost, time and resource requirements"
     ]
 
-    comparison_words = [
-        " or ",
-        " versus ",
-        " vs ",
-        "compare",
-        "better",
-        "choose",
-        "should i",
-        "which",
-        "difference"
+    risks = [
+        "Uncertainty in future outcomes",
+        "Opportunity cost of the selected option",
+        "Execution or implementation risk"
     ]
 
+    opportunities = [
+        "Potential for long-term growth",
+        "Ability to create additional options later",
+        "Potential strategic or practical advantages"
+    ]
+
+    tradeoffs = [
+        "Short-term benefit versus long-term value",
+        "Risk versus potential return",
+        "Flexibility versus commitment"
+    ]
+
+
     if any(
-        word in q
-        for word in numerical_words
+        word in lower
+        for word in [
+            "career",
+            "job",
+            "phd",
+            "study",
+            "degree"
+        ]
     ):
 
-        tools.append("CALCULATOR")
+        factors = [
+            "Career trajectory",
+            "Skill development",
+            "Research and industry exposure"
+        ]
+
+        risks = [
+            "Time investment",
+            "Changing industry requirements",
+            "Opportunity cost"
+        ]
+
+        opportunities = [
+            "Specialized expertise",
+            "Higher-value career options",
+            "Research and innovation opportunities"
+        ]
+
+        tradeoffs = [
+            "Immediate income versus long-term specialization",
+            "Industry experience versus academic depth",
+            "Flexibility versus specialization"
+        ]
+
 
     if any(
-        word in q
-        for word in comparison_words
+        word in lower
+        for word in [
+            "business",
+            "company",
+            "startup",
+            "investment"
+        ]
     ):
 
-        tools.append("DECISION_SCORER")
+        factors = [
+            "Expected return",
+            "Market opportunity",
+            "Capital and execution requirements"
+        ]
 
-    tools.append("LLM")
+        risks = [
+            "Market uncertainty",
+            "Financial exposure",
+            "Execution risk"
+        ]
 
-    return tools
+        opportunities = [
+            "Market growth",
+            "Scalability",
+            "Competitive advantage"
+        ]
 
-
-# ============================================================
-# CONTEXT
-# ============================================================
-
-def build_context(results):
-
-    if not results:
-
-        return (
-            "No relevant knowledge-base evidence "
-            "was retrieved."
-        )
-
-    blocks = []
-
-    for i, item in enumerate(
-        results,
-        1
-    ):
-
-        blocks.append(
-            f"""
-EVIDENCE {i}
-
-Category:
-{item.get("category", "General")}
-
-Title:
-{item.get("title", "Untitled")}
-
-Similarity:
-{item.get("score", 0):.3f}
-
-Content:
-{item.get("text", "")}
-"""
-        )
-
-    return "\n-----------------------------\n".join(
-        blocks
-    )
+        tradeoffs = [
+            "Risk versus return",
+            "Growth versus stability",
+            "Capital investment versus flexibility"
+        ]
 
 
-# ============================================================
-# SIMPLE DECISION SCORER
-# ============================================================
+    if retrieved:
 
-def decision_score(query):
-
-    q = query.lower()
-
-    # Detect two alternatives around "or"
-    match = re.search(
-        r"(.+?)\s+or\s+(.+)",
-        q
-    )
-
-    if not match:
-
-        return None
-
-    option_a = match.group(1).strip()
-    option_b = match.group(2).strip()
-
-    # Clean common question words
-    option_a = re.sub(
-        r"^(should i|should|can i|do i)\s+",
-        "",
-        option_a
-    )
-
-    option_b = re.sub(
-        r"[?.!]+$",
-        "",
-        option_b
-    )
-
-    # If options are effectively synonyms
-    cycling_words = {
-        "cycling",
-        "cycle",
-        "cycling activity",
-        "ride a cycle"
-    }
-
-    biking_words = {
-        "biking",
-        "bike",
-        "riding a bike",
-        "ride bike"
-    }
-
-    same_activity = (
-        (
-            any(x in option_a for x in cycling_words)
-            and
-            any(x in option_b for x in biking_words)
-        )
-        or
-        (
-            any(x in option_b for x in cycling_words)
-            and
-            any(x in option_a for x in biking_words)
-        )
-    )
-
-    if same_activity:
-
-        return {
-            "option_a": option_a.title(),
-            "option_b": option_b.title(),
-            "score_a": 50,
-            "score_b": 50,
-            "same_activity": True
-        }
-
-    return {
-        "option_a": option_a.title(),
-        "option_b": option_b.title(),
-        "score_a": 50,
-        "score_b": 50,
-        "same_activity": False
-    }
-
-
-# ============================================================
-# FALLBACK
-# ============================================================
-
-def fallback_response(
-    query,
-    evidence,
-    score_data=None
-):
-
-    if score_data:
-
-        a = score_data["option_a"]
-        b = score_data["option_b"]
-
-        if score_data.get("same_activity"):
-
-            recommendation = (
-                f"{a} and {b} generally refer to the "
-                "same activity. There is no meaningful "
-                "choice between them; choose based on "
-                "the equipment, route, and style you prefer."
-            )
-
-            option_a_text = (
-                f"{a} is a common term for the activity."
-            )
-
-            option_b_text = (
-                f"{b} is commonly used to describe the "
-                "same type of activity."
-            )
-
-            tradeoffs = (
-                "The main differences are terminology, "
-                "regional usage, and personal preference."
-            )
-
-        else:
-
-            recommendation = (
-                f"Compare {a} and {b} using your goals, "
-                "cost, accessibility, learning curve, "
-                "and long-term usefulness."
-            )
-
-            option_a_text = (
-                f"{a} should be evaluated against your "
-                "specific requirements."
-            )
-
-            option_b_text = (
-                f"{b} should be evaluated using the same "
-                "criteria."
-            )
-
-            tradeoffs = (
-                "The better option depends on your "
-                "priorities and constraints."
-            )
-
-    elif evidence:
-
-        recommendation = (
-            "Use the retrieved decision framework and "
-            "validate the choice against your specific "
-            f"requirements. Strongest evidence: "
-            f"{evidence[0].get('title', 'Retrieved evidence')}."
-        )
-
-        option_a_text = (
-            "Evaluate the first option against the stated "
-            "requirements."
-        )
-
-        option_b_text = (
-            "Evaluate the alternative using the same criteria."
-        )
-
-        tradeoffs = (
-            "The optimal choice depends on which criteria "
-            "matter most."
+        summary = (
+            "DecisionLens retrieved relevant information "
+            "from its knowledge base and combined it with "
+            "structured decision factors. The strongest "
+            "choice should be evaluated against your goals, "
+            "constraints, risk tolerance and long-term impact."
         )
 
     else:
 
-        recommendation = (
-            "More information is required before making "
-            "a reliable recommendation."
-        )
-
-        option_a_text = (
-            "Evaluate the first option."
-        )
-
-        option_b_text = (
-            "Evaluate the alternative."
-        )
-
-        tradeoffs = (
-            "Additional context is required."
+        summary = (
+            "DecisionLens evaluated the decision using a "
+            "structured reasoning framework covering goals, "
+            "risks, opportunities and trade-offs."
         )
 
 
-    return f"""
-RECOMMENDATION:
-
-{recommendation}
-
-
-KEY FACTORS:
-
-- Personal objective
-- Cost
-- Accessibility
-- Learning curve
-- Reliability
-- Long-term usefulness
+    recommendation = (
+        "Prioritize the option with the strongest "
+        "long-term alignment while keeping downside risk manageable."
+    )
 
 
-OPTION A:
+    return {
+        "decision": decision,
 
-{option_a_text}
+        "recommendation":
+            recommendation,
 
+        "summary":
+            summary,
 
-OPTION B:
+        "confidence":
+            82 if retrieved else 74,
 
-{option_b_text}
+        "factors":
+            factors,
 
+        "risks":
+            risks,
 
-TRADE-OFFS:
+        "opportunities":
+            opportunities,
 
-{tradeoffs}
+        "tradeoffs":
+            tradeoffs,
 
-
-RISKS:
-
-The decision may change depending on the user's
-specific goals, constraints, and available resources.
-
-
-REASONING:
-
-The recommendation combines the DecisionLens
-decision framework with retrieved knowledge.
-
-
-CONFIDENCE:
-
-Medium
-"""
+        "evidence":
+            retrieved
+    }
 
 
 # ============================================================
-# GEMINI
-# ============================================================
-
-API_KEY = os.getenv(
-    "GEMINI_API_KEY"
-)
-
-client = None
-
-if API_KEY:
-
-    try:
-
-        client = genai.Client(
-            api_key=API_KEY
-        )
-
-        print("Gemini client initialized.")
-
-    except Exception as e:
-
-        print(
-            "Gemini initialization failed:",
-            e
-        )
-
-
-MODEL_NAME = os.getenv(
-    "GEMINI_MODEL",
-    "gemini-2.5-flash"
-)
-
-
-# ============================================================
-# FRONTEND
+# FRONTEND ROUTES
 # ============================================================
 
 @app.route("/")
@@ -482,12 +345,12 @@ def home():
     )
 
 
-@app.route("/index.html")
-def index():
+@app.route("/dashboard.html")
+def dashboard():
 
     return send_from_directory(
         FRONTEND_DIR,
-        "index.html"
+        "dashboard.html"
     )
 
 
@@ -500,217 +363,73 @@ def result():
     )
 
 
+@app.route("/<path:filename>")
+def frontend_files(filename):
+
+    return send_from_directory(
+        FRONTEND_DIR,
+        filename
+    )
+
+
 # ============================================================
-# HEALTH
+# API
 # ============================================================
 
 @app.route("/api/health")
 def health():
 
     return jsonify({
-
-        "status": "ok",
-
-        "rag": bool(DOCUMENTS),
-
-        "agent": True,
-
-        "llm": bool(client),
-
-        "documents": len(DOCUMENTS),
-
-        "model": MODEL_NAME
-
+        "status": "online",
+        "service": "DecisionLens AI",
+        "knowledge_base":
+            len(KNOWLEDGE_BASE)
     })
 
 
-# ============================================================
-# ANALYZE
-# ============================================================
-
-@app.route(
-    "/api/analyze",
-    methods=["POST"]
-)
+@app.route("/api/analyze", methods=["POST"])
 def analyze():
 
-    data = request.get_json(
-        silent=True
-    ) or {}
+    try:
 
-    query = str(
-        data.get("query", "")
-    ).strip()
+        data = request.get_json(
+            silent=True
+        ) or {}
 
-    if not query:
+        decision = str(
+            data.get("decision", "")
+        ).strip()
+
+        if not decision:
+
+            return jsonify({
+                "error":
+                    "Decision text is required."
+            }), 400
+
+
+        result = analyze_decision(
+            decision
+        )
+
+        return jsonify(result)
+
+
+    except Exception as error:
+
+        print(
+            "ANALYSIS ERROR:",
+            repr(error)
+        )
 
         return jsonify({
-            "error": "Decision query is required."
-        }), 400
-
-
-    # ========================================================
-    # AGENT
-    # ========================================================
-
-    tools = agent_plan(
-        query
-    )
-
-
-    # ========================================================
-    # RAG
-    # ========================================================
-
-    evidence = retrieve(
-        query,
-        top_k=3
-    )
-
-    context = build_context(
-        evidence
-    )
-
-
-    # ========================================================
-    # DECISION SCORER
-    # ========================================================
-
-    score_data = None
-
-    if "DECISION_SCORER" in tools:
-
-        score_data = decision_score(
-            query
-        )
-
-
-    # ========================================================
-    # GEMINI PROMPT
-    # ========================================================
-
-    prompt = f"""
-You are DecisionLens AI,
-an intelligent decision-support system.
-
-USER QUESTION:
-
-{query}
-
-
-AGENT TOOLS:
-
-{", ".join(tools)}
-
-
-DECISION SCORE DATA:
-
-{json.dumps(score_data, indent=2)}
-
-
-RETRIEVED KNOWLEDGE:
-
-{context}
-
-
-Your task is to give a useful decision analysis.
-
-If the two choices are actually synonyms or
-essentially the same thing, explicitly say so.
-
-Do not manufacture facts.
-
-Do not manufacture prices.
-
-Do not manufacture statistics.
-
-Use retrieved evidence where relevant.
-
-Return exactly this structure:
-
-RECOMMENDATION:
-
-KEY FACTORS:
-
-OPTION A:
-
-OPTION B:
-
-TRADE-OFFS:
-
-RISKS:
-
-REASONING:
-
-CONFIDENCE:
-
-Keep the answer concise and practical.
-"""
-
-
-    # ========================================================
-    # GEMINI
-    # ========================================================
-
-    output = None
-
-    if client:
-
-        try:
-
-            response = client.models.generate_content(
-                model=MODEL_NAME,
-                contents=prompt
-            )
-
-            output = response.text
-
-            print(
-                "Gemini response generated."
-            )
-
-        except Exception as e:
-
-            print(
-                "Gemini request failed:",
-                repr(e)
-            )
-
-
-    # ========================================================
-    # FALLBACK
-    # ========================================================
-
-    if not output:
-
-        output = fallback_response(
-            query,
-            evidence,
-            score_data
-        )
-
-
-    # ========================================================
-    # RESPONSE
-    # ========================================================
-
-    return jsonify({
-
-        "query": query,
-
-        "recommendation": output,
-
-        "tools_used": tools,
-
-        "decision_score": score_data,
-
-        "evidence": evidence
-
-    })
+            "error":
+                "The decision engine encountered an error."
+        }), 500
 
 
 # ============================================================
-# START
+# RUN
 # ============================================================
 
 if __name__ == "__main__":
@@ -724,5 +443,6 @@ if __name__ == "__main__":
 
     app.run(
         host="0.0.0.0",
-        port=port
+        port=port,
+        debug=False
     )
