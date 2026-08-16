@@ -1,92 +1,206 @@
 <!DOCTYPE html>
+
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DecisionLens AI</title>
-    <link rel="stylesheet" href="style.css">
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<title>
+DecisionLens AI
+</title>
+
+
+<link rel="stylesheet" href="style.css">
+
+
 </head>
+
 
 <body>
 
-<nav class="navbar">
-    <div class="brand">
-        DECISION<span>LENS</span>
-    </div>
 
-    <div class="navlinks">
-        <a href="/">Home</a>
-        <a href="dashboard.html">Workspace</a>
-        <a href="result.html">Results</a>
-    </div>
+
+<nav>
+
+
+<div class="logo">
+DECISION<span>LENS</span>
+</div>
+
+
+<div class="nav-links">
+
+<a href="/">
+HOME
+</a>
+
+
+<a href="/dashboard.html">
+WORKSPACE
+</a>
+
+</div>
+
+
 </nav>
+
+
+
 
 
 <section class="hero">
 
-    <div class="hero-badge">
-        RAG + AI DECISION INTELLIGENCE
-    </div>
 
-    <h1>
-        Make better<br>
-        <span>decisions.</span>
-    </h1>
 
-    <p>
-        DecisionLens combines retrieval-augmented generation,
-        structured reasoning and AI analysis to help you evaluate
-        complex choices with greater clarity.
-    </p>
+<h1>
+AI DECISION
+<br>
+INTELLIGENCE ENGINE
+</h1>
 
-    <div class="hero-buttons">
-        <a href="dashboard.html" class="primary-btn">
-            START ANALYSIS →
-        </a>
 
-        <a href="#how" class="secondary-btn">
-            HOW IT WORKS
-        </a>
-    </div>
+
+<p>
+
+DecisionLens analyzes your goals, context,
+risks and future possibilities to recommend
+the best path.
+
+</p>
+
+
+
+
+
+<div class="input-card">
+
+
+<h2>
+What decision are you facing?
+</h2>
+
+
+
+<textarea
+
+id="decisionInput"
+
+placeholder="
+Example:
+
+I am a physics student.
+Should I choose Machine Learning
+or Data Science for my career?
+
+"
+
+></textarea>
+
+
+
+
+<button id="analyzeBtn">
+
+<span id="btnText">
+ANALYZE DECISION
+</span>
+
+</button>
+
+
+
+
+<div id="errorBox"></div>
+
+
+
+</div>
+
+
 
 </section>
 
 
-<section class="features" id="how">
 
-    <div class="feature-card">
-        <div class="number">01</div>
-        <h3>Describe</h3>
-        <p>
-            Tell DecisionLens what you are deciding and provide
-            the options, goals or constraints.
-        </p>
-    </div>
 
-    <div class="feature-card">
-        <div class="number red">02</div>
-        <h3>Retrieve</h3>
-        <p>
-            Relevant knowledge is retrieved from the decision
-            intelligence knowledge base.
-        </p>
-    </div>
 
-    <div class="feature-card">
-        <div class="number">03</div>
-        <h3>Reason</h3>
-        <p>
-            AI evaluates trade-offs, risks, opportunities and
-            provides a structured recommendation.
-        </p>
-    </div>
+
+
+
+<section class="features">
+
+
+
+<div class="card">
+
+<h2>
+🧠 Context Intelligence
+</h2>
+
+<p>
+
+Understands your background,
+goals and priorities.
+
+</p>
+
+</div>
+
+
+
+
+
+<div class="card">
+
+<h2>
+📊 Decision Simulation
+</h2>
+
+<p>
+
+Compares opportunities,
+risks and future outcomes.
+
+</p>
+
+</div>
+
+
+
+
+
+
+<div class="card">
+
+<h2>
+🚀 Future Projection
+</h2>
+
+<p>
+
+Generates possible career
+and life paths.
+
+</p>
+
+</div>
+
+
 
 </section>
 
 
-<footer>
-    DECISIONLENS AI <span>•</span> INTELLIGENT DECISION SUPPORT
-</footer>
+
+
+
+
+<script src="script.js"></script>
+
 
 </body>
+
+
 </html>
