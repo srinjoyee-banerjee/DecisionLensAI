@@ -4,7 +4,9 @@
 <head>
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<meta name="viewport"
+content="width=device-width,initial-scale=1.0">
 
 <title>DecisionLens AI Report</title>
 
@@ -26,11 +28,15 @@ DECISION<span>LENS</span>
 <div class="nav-links">
 
 <a href="/">HOME</a>
-<a href="/dashboard.html">WORKSPACE</a>
+
+<a href="/dashboard.html">
+WORKSPACE
+</a>
 
 </div>
 
 </nav>
+
 
 
 
@@ -42,14 +48,21 @@ DECISIONLENS / AI DECISION REPORT
 </h1>
 
 
+
+
+
 <section class="card">
+
 
 <h2>
 Decision Intelligence
 </h2>
 
 
-<p id="question"></p>
+<p id="question">
+Loading decision...
+</p>
+
 
 
 <div class="confidence">
@@ -60,10 +73,13 @@ AI CONFIDENCE
 --
 </span>
 
+
 </div>
 
 
 </section>
+
+
 
 
 
@@ -77,12 +93,17 @@ PRIMARY RECOMMENDATION
 </h2>
 
 
+
 <h1 id="recommendation">
 --
 </h1>
 
 
-<p id="finalAdvice"></p>
+
+<p id="finalAdvice">
+--
+</p>
+
 
 
 </section>
@@ -91,8 +112,9 @@ PRIMARY RECOMMENDATION
 
 
 
-<section class="card">
 
+
+<section class="card">
 
 <h2>
 WHY THIS CHOICE
@@ -103,6 +125,8 @@ WHY THIS CHOICE
 
 
 </section>
+
+
 
 
 
@@ -125,6 +149,8 @@ WHY NOT THE ALTERNATIVE
 
 
 
+
+
 <section class="card">
 
 
@@ -137,6 +163,8 @@ ADVANTAGES
 
 
 </section>
+
+
 
 
 
@@ -159,6 +187,8 @@ DISADVANTAGES
 
 
 
+
+
 <section class="card">
 
 
@@ -174,66 +204,130 @@ TRADE-OFFS
 
 
 
+
+
 </main>
+
+
+
 
 
 
 <script>
 
 
+// ============================================================
+// LOAD DECISION REPORT
+// ============================================================
+
+
 const result =
 JSON.parse(
+
 localStorage.getItem(
 "decisionResult"
 )
+
 );
+
+
+
 
 
 
 if(result){
 
 
+
 document.getElementById(
 "question"
 ).innerHTML =
-result.question;
+
+
+result.decision_intelligence ||
+
+result.decision ||
+
+"Decision Analysis";
+
+
 
 
 
 document.getElementById(
 "confidence"
 ).innerHTML =
-result.confidence+"%";
+
+
+(result.confidence || 0)
++
+"%";
+
+
+
+
 
 
 
 document.getElementById(
 "recommendation"
 ).innerHTML =
-result.recommendation;
+
+
+result.recommendation ||
+
+"--";
+
+
+
+
 
 
 
 document.getElementById(
 "finalAdvice"
 ).innerHTML =
-result.final_advice;
+
+
+result.primary_reason ||
+
+result.final_advice ||
+
+"";
+
+
+
+
+
 
 
 
 function fill(id,data){
 
 
-let box=document.getElementById(id);
+
+const box =
+document.getElementById(id);
 
 
-if(data && data.length){
+
+box.innerHTML="";
 
 
-data.forEach(item=>{
+
+if(
+Array.isArray(data)
+&&
+data.length>0
+){
 
 
-let li=document.createElement(
+data.forEach(
+item=>{
+
+
+const li =
+document.createElement(
 "li"
 );
 
@@ -244,12 +338,27 @@ li.innerHTML=item;
 box.appendChild(li);
 
 
-});
+}
+
+);
 
 
 }
 
+else{
+
+
+box.innerHTML =
+"<li>No information available</li>";
+
 }
+
+
+
+}
+
+
+
 
 
 
@@ -259,10 +368,12 @@ result.why
 );
 
 
+
 fill(
 "whyNot",
 result.why_not
 );
+
 
 
 fill(
@@ -271,16 +382,21 @@ result.advantages
 );
 
 
+
 fill(
 "disadvantages",
 result.disadvantages
 );
 
 
+
 fill(
 "tradeoffs",
 result.tradeoffs
 );
+
+
+
 
 
 
@@ -292,13 +408,32 @@ else{
 document.querySelector(
 ".report"
 ).innerHTML =
-"<h2>No decision data found</h2>";
+
+`
+
+<section class="card">
+
+<h2>
+No decision data found
+</h2>
+
+<p>
+Please return to workspace and analyze a decision.
+</p>
+
+</section>
+
+`;
+
 
 
 }
 
 
+
 </script>
+
+
 
 
 </body>
