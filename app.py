@@ -4,16 +4,16 @@ from flask_cors import CORS
 import json
 import os
 import re
+import math
 
 
 # ============================================================
 # DECISIONLENS AI
-# CONTEXT-AWARE DECISION ENGINE
+# RAG-POWERED DECISION INTELLIGENCE ENGINE
 # ============================================================
 
 app = Flask(__name__)
 CORS(app)
-
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
@@ -27,16 +27,11 @@ KB_FILE = os.path.join(BASE_DIR, "knowledge_base.json")
 def load_knowledge_base():
 
     if not os.path.exists(KB_FILE):
+        print("Knowledge base not found:", KB_FILE)
         return []
 
     try:
-
-        with open(
-            KB_FILE,
-            "r",
-            encoding="utf-8"
-        ) as file:
-
+        with open(KB_FILE, "r", encoding="utf-8") as file:
             data = json.load(file)
 
         if isinstance(data, list):
@@ -51,16 +46,13 @@ def load_knowledge_base():
                 "data",
                 "items"
             ]:
-
                 if key in data and isinstance(data[key], list):
                     return data[key]
 
             return [data]
 
     except Exception as error:
-
         print("Knowledge base error:", error)
-
         return []
 
 
@@ -68,7 +60,7 @@ KNOWLEDGE_BASE = load_knowledge_base()
 
 
 # ============================================================
-# TEXT UTILITIES
+# STOPWORDS
 # ============================================================
 
 STOPWORDS = {
@@ -79,17 +71,31 @@ STOPWORDS = {
     "than", "then", "they", "them", "their",
     "choose", "choice", "option", "decision",
     "better", "best", "using", "use", "want",
-    "need", "like", "should", "i", "me", "my",
+    "need", "like", "i", "me", "my",
     "to", "of", "in", "on", "a", "an", "is",
-    "or", "vs", "versus"
+    "or", "vs", "versus", "should", "we",
+    "can", "do", "does", "would", "could"
 }
+
+
+# ============================================================
+# TEXT UTILITIES
+# ============================================================
+
+def normalize(text):
+
+    return re.sub(
+        r"\s+",
+        " ",
+        str(text).lower().strip()
+    )
 
 
 def tokenize(text):
 
     words = re.findall(
         r"[a-zA-Z][a-zA-Z0-9+#.-]{2,}",
-        text.lower()
+        normalize(text)
     )
 
     return [
@@ -114,7 +120,9 @@ def extract_text(item):
             "text",
             "description",
             "summary",
-            "answer"
+            "answer",
+            "topic",
+            "category"
         ]:
 
             value = item.get(key)
@@ -128,224 +136,29 @@ def extract_text(item):
 
 
 # ============================================================
-# KNOWLEDGE RETRIEVAL
-# ============================================================
-
-def retrieve(decision, limit=5):
-
-    decision_words = set(
-        tokenize(decision)
-    )
-
-    scored = []
-
-    for item in KNOWLEDGE_BASE:
-
-        text = extract_text(item)
-
-        knowledge_words = set(
-            tokenize(text)
-        )
-
-        overlap = decision_words.intersection(
-            knowledge_words
-        )
-
-        score = len(overlap)
-
-        if score > 0:
-
-            scored.append(
-                (score, item)
-            )
-
-    scored.sort(
-        key=lambda x: x[0],
-        reverse=True
-    )
-
-    results = []
-
-    for score, item in scored[:limit]:
-
-        if isinstance(item, dict):
-
-            results.append({
-                "title":
-                    item.get(
-                        "title",
-                        "Retrieved intelligence"
-                    ),
-
-                "content":
-                    item.get(
-                        "content",
-                        item.get(
-                            "text",
-                            item.get(
-                                "description",
-                                ""
-                            )
-                        )
-                    )
-            })
-
-        else:
-
-            results.append({
-                "title":
-                    "Decision Knowledge Base",
-
-                "content":
-                    str(item)
-            })
-
-    return results
-
-
-# ============================================================
-# DOMAIN DETECTION
-# ============================================================
-
-def detect_domain(decision):
-
-    text = decision.lower()
-
-    domain_keywords = {
-
-        "ml_ds": [
-            "machine learning",
-            "data science",
-            "data scientist",
-            "ml engineer",
-            "ai engineer",
-            "deep learning",
-            "neural network",
-            "random forest",
-            "xgboost",
-            "classification",
-            "regression",
-            "model",
-            "dataset",
-            "feature engineering",
-            "computer vision",
-            "nlp",
-            "python",
-            "algorithm"
-        ],
-
-        "career": [
-            "career",
-            "job",
-            "role",
-            "profession",
-            "salary",
-            "placement",
-            "employment",
-            "industry",
-            "company"
-        ],
-
-        "education": [
-            "phd",
-            "masters",
-            "master's",
-            "degree",
-            "college",
-            "university",
-            "course",
-            "study",
-            "research",
-            "higher education"
-        ],
-
-        "technology": [
-            "software",
-            "framework",
-            "technology",
-            "database",
-            "cloud",
-            "aws",
-            "azure",
-            "docker",
-            "kubernetes",
-            "react",
-            "flask",
-            "api",
-            "backend",
-            "frontend",
-            "github"
-        ],
-
-        "business": [
-            "business",
-            "startup",
-            "company",
-            "investment",
-            "market",
-            "customer",
-            "revenue",
-            "product",
-            "enterprise"
-        ],
-
-        "finance": [
-            "investment",
-            "stock",
-            "fund",
-            "loan",
-            "money",
-            "finance",
-            "financial",
-            "return",
-            "portfolio",
-            "expense",
-            "budget"
-        ],
-
-        "health": [
-            "health",
-            "exercise",
-            "fitness",
-            "diet",
-            "workout",
-            "nutrition",
-            "sleep"
-        ]
-    }
-
-
-    scores = {}
-
-    for domain, keywords in domain_keywords.items():
-
-        score = 0
-
-        for keyword in keywords:
-
-            if keyword in text:
-                score += 1
-
-        scores[domain] = score
-
-
-    best_domain = max(
-        scores,
-        key=scores.get
-    )
-
-
-    if scores[best_domain] == 0:
-
-        return "general"
-
-
-    return best_domain
-
-
-# ============================================================
 # OPTION EXTRACTION
 # ============================================================
+
+def clean_option(option):
+
+    option = option.strip(" ?.,:;")
+
+    option = re.sub(
+        r"^(should i|should we|which is better|what is better)\s+",
+        "",
+        option,
+        flags=re.IGNORECASE
+    )
+
+    option = re.sub(
+        r"^(choose|pick|select)\s+",
+        "",
+        option,
+        flags=re.IGNORECASE
+    )
+
+    return option.strip(" ?.,:;")
+
 
 def extract_options(decision):
 
@@ -361,9 +174,10 @@ def extract_options(decision):
 
         r"should\s+i\s+(?:choose|pick|select)\s+(.+?)\s+or\s+(.+)",
 
+        r"should\s+i\s+(?:take|do|go\s+with)\s+(.+?)\s+or\s+(.+)",
+
         r"(.+?)\s+or\s+(.+)"
     ]
-
 
     for pattern in patterns:
 
@@ -373,570 +187,1020 @@ def extract_options(decision):
             re.IGNORECASE
         )
 
-        if match:
+        if not match:
+            continue
 
-            option_a = match.group(1).strip()
-            option_b = match.group(2).strip()
+        option_a = clean_option(match.group(1))
+        option_b = clean_option(match.group(2))
 
+        if (
+            2 <= len(option_a) <= 120
+            and 2 <= len(option_b) <= 120
+        ):
 
-            # Remove question framing
-            option_a = re.sub(
-                r"^(should i|should we|which is better|what is better)\s+",
-                "",
-                option_a,
-                flags=re.IGNORECASE
-            )
-
-
-            option_a = option_a.strip(
-                " ?.,:"
-            )
-
-            option_b = option_b.strip(
-                " ?.,:"
-            )
-
-
-            if (
-                len(option_a) >= 2
-                and len(option_b) >= 2
-                and len(option_a) <= 100
-                and len(option_b) <= 100
-            ):
-
-                return (
-                    option_a,
-                    option_b
-                )
-
+            # Avoid accidentally treating a huge sentence as an option
+            if len(option_a.split()) <= 15 and len(option_b.split()) <= 15:
+                return option_a, option_b
 
     return None, None
 
 
 # ============================================================
-# ML / DATA SCIENCE ANALYSIS
+# DOMAIN DETECTION
 # ============================================================
 
-def analyze_ml_ds(decision):
+DOMAIN_KEYWORDS = {
 
-    lower = decision.lower()
+    "ml_ds": [
+        "machine learning",
+        "data science",
+        "data scientist",
+        "ml engineer",
+        "ai engineer",
+        "deep learning",
+        "neural network",
+        "random forest",
+        "xgboost",
+        "classification",
+        "regression",
+        "dataset",
+        "feature engineering",
+        "computer vision",
+        "nlp",
+        "python",
+        "algorithm",
+        "model"
+    ],
 
-    option_a, option_b = extract_options(
+    "career": [
+        "career",
+        "job",
+        "role",
+        "profession",
+        "salary",
+        "placement",
+        "employment",
+        "industry",
+        "company",
+        "career path",
+        "career option"
+    ],
+
+    "education": [
+        "phd",
+        "masters",
+        "master's",
+        "degree",
+        "college",
+        "university",
+        "course",
+        "study",
+        "research",
+        "higher education",
+        "certification"
+    ],
+
+    "technology": [
+        "software",
+        "framework",
+        "technology",
+        "database",
+        "cloud",
+        "aws",
+        "azure",
+        "docker",
+        "kubernetes",
+        "react",
+        "flask",
+        "api",
+        "backend",
+        "frontend",
+        "github",
+        "python"
+    ],
+
+    "business": [
+        "business",
+        "startup",
+        "company",
+        "investment",
+        "market",
+        "customer",
+        "revenue",
+        "product",
+        "enterprise",
+        "profit"
+    ],
+
+    "finance": [
+        "investment",
+        "stock",
+        "fund",
+        "loan",
+        "money",
+        "finance",
+        "financial",
+        "return",
+        "portfolio",
+        "expense",
+        "budget"
+    ],
+
+    "health": [
+        "health",
+        "exercise",
+        "fitness",
+        "diet",
+        "workout",
+        "nutrition",
+        "sleep"
+    ]
+}
+
+
+def detect_domain(decision):
+
+    text = normalize(decision)
+
+    scores = {}
+
+    for domain, keywords in DOMAIN_KEYWORDS.items():
+
+        score = 0
+
+        for keyword in keywords:
+
+            if keyword in text:
+                score += 1
+
+        scores[domain] = score
+
+    best_domain = max(
+        scores,
+        key=scores.get
+    )
+
+    if scores[best_domain] == 0:
+        return "general"
+
+    return best_domain
+
+
+# ============================================================
+# RAG RETRIEVAL
+# ============================================================
+
+def retrieve(decision, limit=5):
+
+    decision_tokens = set(
+        tokenize(decision)
+    )
+
+    if not decision_tokens:
+        return []
+
+    scored = []
+
+    for item in KNOWLEDGE_BASE:
+
+        text = extract_text(item)
+
+        if not text:
+            continue
+
+        knowledge_tokens = set(
+            tokenize(text)
+        )
+
+        overlap = decision_tokens.intersection(
+            knowledge_tokens
+        )
+
+        if not overlap:
+            continue
+
+        # Basic lexical relevance
+        overlap_score = len(overlap)
+
+        # Give additional weight to important phrases
+        phrase_bonus = 0
+
+        decision_lower = normalize(decision)
+        text_lower = normalize(text)
+
+        for token in decision_tokens:
+
+            if len(token) >= 5 and token in text_lower:
+                phrase_bonus += 0.25
+
+        score = overlap_score + phrase_bonus
+
+        scored.append(
+            (
+                score,
+                item,
+                list(overlap)
+            )
+        )
+
+    scored.sort(
+        key=lambda x: x[0],
+        reverse=True
+    )
+
+    results = []
+
+    for score, item, overlap in scored[:limit]:
+
+        if isinstance(item, dict):
+
+            title = item.get(
+                "title",
+                item.get(
+                    "topic",
+                    "Decision Knowledge"
+                )
+            )
+
+            content = item.get(
+                "content",
+                item.get(
+                    "text",
+                    item.get(
+                        "description",
+                        item.get(
+                            "summary",
+                            ""
+                        )
+                    )
+                )
+            )
+
+        else:
+
+            title = "Decision Knowledge"
+            content = str(item)
+
+        results.append({
+
+            "title": str(title),
+
+            "content": str(content),
+
+            "relevance":
+                round(
+                    min(
+                        100,
+                        score * 12
+                    ),
+                    1
+                ),
+
+            "matched_terms":
+                overlap[:8]
+
+        })
+
+    return results
+
+
+# ============================================================
+# KEYWORD GROUPS FOR DECISION SCORING
+# ============================================================
+
+OBJECTIVE_TERMS = {
+    "growth": [
+        "growth",
+        "future",
+        "career",
+        "long term",
+        "progression",
+        "advancement"
+    ],
+
+    "income": [
+        "salary",
+        "income",
+        "pay",
+        "money",
+        "financial",
+        "earning",
+        "return"
+    ],
+
+    "skills": [
+        "skill",
+        "technical",
+        "learning",
+        "expertise",
+        "knowledge",
+        "experience"
+    ],
+
+    "flexibility": [
+        "flexibility",
+        "flexible",
+        "options",
+        "versatile",
+        "mobility",
+        "transferable"
+    ],
+
+    "risk": [
+        "risk",
+        "safe",
+        "security",
+        "stable",
+        "uncertain",
+        "uncertainty"
+    ],
+
+    "cost": [
+        "cost",
+        "price",
+        "budget",
+        "expensive",
+        "affordable",
+        "investment"
+    ],
+
+    "time": [
+        "time",
+        "quick",
+        "fast",
+        "duration",
+        "years",
+        "months"
+    ]
+}
+
+
+def detect_objectives(decision):
+
+    text = normalize(decision)
+
+    objectives = []
+
+    for objective, keywords in OBJECTIVE_TERMS.items():
+
+        for keyword in keywords:
+
+            if keyword in text:
+                objectives.append(objective)
+                break
+
+    if not objectives:
+
+        objectives = [
+            "growth",
+            "skills",
+            "risk",
+            "flexibility"
+        ]
+
+    return objectives
+
+
+# ============================================================
+# OPTION-SPECIFIC SIGNALS
+# ============================================================
+
+OPTION_PROFILES = {
+
+    "machine learning": {
+        "skills": 95,
+        "growth": 94,
+        "flexibility": 84,
+        "risk": 70
+    },
+
+    "ml": {
+        "skills": 95,
+        "growth": 94,
+        "flexibility": 84,
+        "risk": 70
+    },
+
+    "ml engineer": {
+        "skills": 97,
+        "growth": 95,
+        "flexibility": 88,
+        "risk": 68
+    },
+
+    "data science": {
+        "skills": 90,
+        "growth": 90,
+        "flexibility": 92,
+        "risk": 76
+    },
+
+    "data scientist": {
+        "skills": 90,
+        "growth": 90,
+        "flexibility": 92,
+        "risk": 76
+    },
+
+    "data analyst": {
+        "skills": 78,
+        "growth": 75,
+        "flexibility": 91,
+        "risk": 88
+    },
+
+    "software engineer": {
+        "skills": 92,
+        "growth": 92,
+        "flexibility": 94,
+        "risk": 78
+    },
+
+    "ai engineer": {
+        "skills": 97,
+        "growth": 96,
+        "flexibility": 86,
+        "risk": 67
+    }
+}
+
+
+def get_profile(option):
+
+    normalized = normalize(option)
+
+    for name, profile in OPTION_PROFILES.items():
+
+        if name in normalized:
+
+            return profile
+
+    # Generic profile
+    return {
+        "skills": 78,
+        "growth": 78,
+        "flexibility": 78,
+        "risk": 78
+    }
+
+
+# ============================================================
+# OPTION SCORING
+# ============================================================
+
+def score_option(
+    option,
+    decision,
+    retrieved
+):
+
+    profile = get_profile(option)
+
+    objectives = detect_objectives(
         decision
     )
 
+    weights = {
+
+        "growth": 1.0,
+
+        "skills": 1.0,
+
+        "flexibility": 0.85,
+
+        "risk": 0.85
+    }
+
+    # Adjust weights based on actual question
+    if "income" in objectives:
+        weights["growth"] = 0.7
+        weights["risk"] = 0.8
+
+    if "cost" in objectives:
+        weights["risk"] = 1.0
+
+    if "time" in objectives:
+        weights["flexibility"] = 0.7
+
+    weighted_total = 0
+    total_weight = 0
+
+    for objective in objectives:
+
+        value = profile.get(
+            objective,
+            75
+        )
+
+        weight = weights.get(
+            objective,
+            0.8
+        )
+
+        weighted_total += value * weight
+        total_weight += weight
+
+    base_score = (
+        weighted_total / total_weight
+        if total_weight
+        else 75
+    )
 
     # --------------------------------------------------------
-    # CAREER-LEVEL ML VS DATA SCIENCE
+    # Evidence bonus
     # --------------------------------------------------------
 
-    if (
-        ("machine learning" in lower or "ml" in lower)
-        and "data science" in lower
-    ):
+    option_tokens = set(
+        tokenize(option)
+    )
 
-        recommendation = (
-            "For a technically focused career, prioritize "
-            "Machine Learning. It provides deeper exposure "
-            "to model development, feature engineering, "
-            "optimization and deployment. Choose Data Science "
-            "instead if your priority is broader analytics, "
-            "business interpretation and experimentation."
+    evidence_bonus = 0
+
+    for item in retrieved:
+
+        evidence_text = normalize(
+            item.get(
+                "content",
+                ""
+            )
         )
 
-        factors = [
-            "Machine Learning provides deeper specialization in predictive modeling and AI systems",
-            "Data Science provides broader exposure to statistics, analytics and business decision-making",
-            "ML roles generally require stronger algorithmic and engineering depth",
-            "Data Science roles often place greater emphasis on data analysis, experimentation and communication"
-        ]
+        overlap = 0
 
-        risks = [
-            "Choosing ML can require a steeper learning curve in mathematics, algorithms and model engineering",
-            "Choosing Data Science may provide less specialization if your long-term goal is advanced AI engineering",
-            "Both fields are highly competitive, so portfolio quality and practical experience matter"
-        ]
+        for token in option_tokens:
 
-        opportunities = [
-            "Machine Learning can lead toward ML Engineer, AI Engineer and Deep Learning roles",
-            "Data Science can lead toward Data Scientist, Analytics and Decision Science roles",
-            "Strong ML and Data Science foundations can later overlap in applied AI projects"
-        ]
+            if token in evidence_text:
+                overlap += 1
 
-        tradeoffs = [
-            "Technical specialization versus broader analytics exposure",
-            "Model engineering depth versus business-oriented analysis",
-            "Deeper AI expertise versus greater role flexibility"
-        ]
+        if overlap:
+            evidence_bonus += min(
+                3,
+                overlap * 0.75
+            )
 
-        summary = (
-            "DecisionLens identified this as an ML/Data Science "
-            "career decision. The key distinction is technical "
-            "model-building depth versus broader analytical and "
-            "business exposure."
-        )
+    final_score = min(
+        99,
+        base_score + evidence_bonus
+    )
 
-        return (
-            recommendation,
-            summary,
-            factors,
-            risks,
-            opportunities,
-            tradeoffs
-        )
+    return round(
+        final_score,
+        1
+    )
 
 
-    # --------------------------------------------------------
-    # MODEL COMPARISON
-    # --------------------------------------------------------
+# ============================================================
+# DYNAMIC RECOMMENDATION
+# ============================================================
 
-    if (
-        any(
-            word in lower
-            for word in [
-                "random forest",
-                "xgboost",
-                "lightgbm",
-                "decision tree",
-                "logistic regression",
-                "svm",
-                "neural network"
-            ]
-        )
-        and any(
-            word in lower
-            for word in [
-                "model",
-                "algorithm",
-                "classifier",
-                "prediction"
-            ]
-        )
-    ):
+def build_recommendation(
+    option_a,
+    option_b,
+    score_a,
+    score_b,
+    domain,
+    decision
+):
 
-        factors = [
-            "Validation performance should be compared using the same train/test or cross-validation strategy",
-            "Feature type, dataset size and class imbalance can strongly affect model suitability",
-            "Interpretability and feature importance may matter for the final application",
-            "Training and inference cost should be considered alongside accuracy"
-        ]
+    difference = abs(
+        score_a - score_b
+    )
 
-        risks = [
-            "Optimizing only for accuracy can hide poor minority-class performance",
-            "A more complex model can overfit if validation is not designed carefully",
-            "Model performance may change when deployed on new data"
-        ]
+    if score_a > score_b:
 
-        opportunities = [
-            "Cross-validation can identify whether the performance difference is consistent",
-            "Feature importance can reveal which variables actually drive predictions",
-            "Model ensembles can provide stronger performance when individual models have complementary weaknesses"
-        ]
+        winner = option_a
+        loser = option_b
+        winner_score = score_a
+        loser_score = score_b
 
-        tradeoffs = [
-            "Predictive performance versus interpretability",
-            "Model complexity versus training and deployment simplicity",
-            "Accuracy versus robustness on unseen data"
-        ]
+    else:
 
-        recommendation = (
-            "Choose the model that demonstrates the strongest "
-            "validated performance on the metric that matters "
-            "for your application, rather than selecting an "
-            "algorithm based only on its reputation."
-        )
+        winner = option_b
+        loser = option_a
+        winner_score = score_b
+        loser_score = score_a
 
-        summary = (
-            "DecisionLens identified this as a machine-learning "
-            "model-selection decision. The analysis prioritizes "
-            "validation performance, generalization, "
-            "interpretability and deployment constraints."
-        )
+    domain_text = {
 
-        return (
-            recommendation,
-            summary,
-            factors,
-            risks,
-            opportunities,
-            tradeoffs
-        )
+        "ml_ds":
+            "technical depth, model-building capability and long-term AI relevance",
 
+        "career":
+            "career alignment, skill development and long-term professional mobility",
 
-    # --------------------------------------------------------
-    # GENERAL ML / AI PROJECT
-    # --------------------------------------------------------
+        "education":
+            "learning value, specialization and alignment with future goals",
+
+        "technology":
+            "technical suitability, maintainability and scalability",
+
+        "business":
+            "value creation, execution feasibility and long-term business potential",
+
+        "finance":
+            "expected value, downside risk and financial suitability",
+
+        "health":
+            "practical suitability, sustainability and potential benefit",
+
+        "general":
+            "objective alignment, feasibility, expected value and risk"
+    }.get(
+        domain,
+        "objective alignment, feasibility and risk"
+    )
+
+    if difference >= 12:
+
+        strength = "a clear advantage"
+
+    elif difference >= 6:
+
+        strength = "a meaningful advantage"
+
+    else:
+
+        strength = "a relatively narrow advantage"
 
     recommendation = (
-        "For an ML/AI decision, prioritize the option that "
-        "produces reliable validation performance while "
-        "remaining practical to train, interpret and deploy."
+        f"DecisionLens recommends **{winner}** over **{loser}**. "
+        f"{winner} scores {winner_score}/100 compared with "
+        f"{loser_score}/100, giving it {strength}. "
+        f"The decision was evaluated primarily using "
+        f"{domain_text}. "
+        f"The result should still be reconsidered if your "
+        f"constraints, priorities or available evidence change."
     )
 
-    summary = (
-        "DecisionLens identified this as an AI/ML decision. "
-        "The strongest evaluation should consider data quality, "
-        "model performance, generalization, computational cost "
-        "and deployment requirements."
-    )
-
-    factors = [
-        "Dataset quality and relevance",
-        "Validation performance and generalization",
-        "Feature engineering and model suitability",
-        "Computational and deployment requirements"
-    ]
-
-    risks = [
-        "Overfitting or weak generalization",
-        "Data leakage or biased training data",
-        "Performance degradation on real-world data",
-        "Deployment and maintenance complexity"
-    ]
-
-    opportunities = [
-        "Improved predictive performance",
-        "Automation of repetitive analytical tasks",
-        "Scalable AI-powered decision support",
-        "Potential for future model improvement"
-    ]
-
-    tradeoffs = [
-        "Accuracy versus interpretability",
-        "Model complexity versus deployment simplicity",
-        "Performance versus computational cost",
-        "Short-term implementation versus long-term scalability"
-    ]
-
-    return (
-        recommendation,
-        summary,
-        factors,
-        risks,
-        opportunities,
-        tradeoffs
-    )
+    return recommendation, winner
 
 
 # ============================================================
-# CAREER ANALYSIS
+# DYNAMIC SUMMARY
 # ============================================================
 
-def analyze_career(decision):
+def build_summary(
+    option_a,
+    option_b,
+    score_a,
+    score_b,
+    domain,
+    retrieved
+):
 
-    lower = decision.lower()
-
-    option_a, option_b = extract_options(
-        decision
+    winner = (
+        option_a
+        if score_a >= score_b
+        else option_b
     )
 
+    if score_a == score_b:
 
-    if option_a and option_b:
-
-        recommendation = (
-            f"Between {option_a} and {option_b}, "
-            f"the stronger choice depends on the skills, "
-            f"role opportunities and long-term specialization "
-            f"you want. Evaluate both against your target role, "
-            f"salary potential, learning curve and industry demand."
+        comparison = (
+            f"{option_a} and {option_b} produced similar "
+            f"overall scores."
         )
 
     else:
 
-        recommendation = (
-            "Prioritize the career path that gives you the "
-            "strongest combination of relevant skills, "
-            "demonstrable project experience and long-term "
-            "role opportunities."
+        comparison = (
+            f"{winner} produced the stronger overall score."
         )
 
-
-    factors = [
-        "Alignment with the target job role",
-        "Transferable and technically relevant skills",
-        "Industry demand and future career mobility",
-        "Portfolio and practical experience requirements"
-    ]
-
-    risks = [
-        "Changing industry requirements",
-        "Skill gaps that may reduce employability",
-        "Opportunity cost of specializing too early",
-        "Competition for entry-level roles"
-    ]
-
-    opportunities = [
-        "Building a specialized technical profile",
-        "Creating projects that demonstrate practical ability",
-        "Expanding into adjacent AI, software or analytical roles",
-        "Developing skills that remain transferable across industries"
-    ]
-
-    tradeoffs = [
-        "Specialization versus career flexibility",
-        "Immediate opportunity versus long-term growth",
-        "Technical depth versus breadth of skills",
-        "Salary potential versus learning and role fit"
-    ]
-
-    summary = (
-        "DecisionLens identified this as a career decision "
-        "and evaluated it using role alignment, skill development, "
-        "industry demand, flexibility and long-term growth."
+    evidence_text = (
+        f"{len(retrieved)} relevant knowledge-base "
+        f"record{'s' if len(retrieved) != 1 else ''} "
+        f"were retrieved."
+        if retrieved
+        else
+        "No directly matching knowledge-base evidence "
+        "was retrieved."
     )
 
     return (
-        recommendation,
-        summary,
-        factors,
-        risks,
-        opportunities,
-        tradeoffs
+        f"DecisionLens classified this as a {domain.replace('_', ' ')} "
+        f"decision. {comparison} "
+        f"The comparison combines objective alignment, "
+        f"option characteristics and retrieved intelligence. "
+        f"{evidence_text}"
     )
 
 
 # ============================================================
-# EDUCATION ANALYSIS
+# DYNAMIC FACTORS
 # ============================================================
 
-def analyze_education(decision):
+def build_factors(
+    option_a,
+    option_b,
+    score_a,
+    score_b,
+    domain,
+    objectives
+):
 
-    recommendation = (
-        "Choose the education path that most directly strengthens "
-        "the expertise required for your intended career or "
-        "research direction, while keeping the time and opportunity "
-        "cost realistic."
-    )
-
-    summary = (
-        "DecisionLens identified this as an education decision. "
-        "The analysis focuses on specialization, career alignment, "
-        "research value, time investment and opportunity cost."
+    winner = (
+        option_a
+        if score_a >= score_b
+        else option_b
     )
 
     factors = [
-        "Alignment with long-term career or research goals",
-        "Quality and relevance of the curriculum",
-        "Research, project and industry exposure",
-        "Time and financial investment"
+
+        f"Primary objective alignment favors {winner}",
+
+        f"{option_a} scored {score_a}/100 against "
+        f"{option_b} at {score_b}/100",
+
+        "The analysis considers the priorities expressed "
+        "in the decision rather than relying on a single metric",
+
+        "Long-term suitability and practical feasibility "
+        "are considered alongside potential upside"
     ]
 
-    risks = [
-        "Long time commitment",
-        "Opportunity cost compared with gaining industry experience",
-        "Curriculum may not match evolving industry requirements",
-        "Specialization can reduce flexibility if chosen too narrowly"
-    ]
+    if "growth" in objectives:
 
-    opportunities = [
-        "Deeper domain expertise",
-        "Research and publication opportunities",
-        "Access to specialized technical networks",
-        "Improved eligibility for advanced technical roles"
-    ]
+        factors.append(
+            "Long-term growth and progression were given additional weight"
+        )
 
-    tradeoffs = [
-        "Academic depth versus immediate industry experience",
-        "Specialization versus flexibility",
-        "Long-term expertise versus short-term opportunity",
-        "Research freedom versus structured career progression"
-    ]
+    if "skills" in objectives:
 
-    return (
-        recommendation,
-        summary,
-        factors,
-        risks,
-        opportunities,
-        tradeoffs
-    )
+        factors.append(
+            "Skill development and technical capability were emphasized"
+        )
+
+    if "risk" in objectives:
+
+        factors.append(
+            "Risk and uncertainty were explicitly considered"
+        )
+
+    return factors[:6]
 
 
 # ============================================================
-# BUSINESS ANALYSIS
+# RISKS
 # ============================================================
 
-def analyze_business(decision):
+def build_risks(
+    option_a,
+    option_b,
+    score_a,
+    score_b,
+    domain
+):
 
-    recommendation = (
-        "Prioritize the option with the clearest customer value, "
-        "credible market demand and manageable execution cost. "
-        "A promising opportunity should be supported by evidence "
-        "rather than expected growth alone."
-    )
+    return [
 
-    summary = (
-        "DecisionLens identified this as a business decision and "
-        "evaluated market demand, customer value, execution risk, "
-        "financial exposure and scalability."
-    )
+        f"The recommendation depends on the assumptions "
+        f"contained in the decision about {option_a} and {option_b}",
 
-    factors = [
-        "Customer demand and problem severity",
-        "Expected financial return",
-        "Market size and competitive position",
-        "Capital and execution requirements"
+        "Real-world outcomes can differ from the evidence "
+        "available in the knowledge base",
+
+        "A higher score does not eliminate execution or "
+        "implementation risk",
+
+        "Future changes in market, technology or personal "
+        "constraints could change the preferred option"
     ]
-
-    risks = [
-        "Market uncertainty",
-        "Financial exposure",
-        "Competition",
-        "Execution and operational risk"
-    ]
-
-    opportunities = [
-        "Revenue growth",
-        "Market expansion",
-        "Scalability",
-        "Competitive differentiation"
-    ]
-
-    tradeoffs = [
-        "Risk versus expected return",
-        "Growth versus stability",
-        "Capital investment versus flexibility",
-        "Speed to market versus product quality"
-    ]
-
-    return (
-        recommendation,
-        summary,
-        factors,
-        risks,
-        opportunities,
-        tradeoffs
-    )
 
 
 # ============================================================
-# TECHNOLOGY ANALYSIS
+# OPPORTUNITIES
 # ============================================================
 
-def analyze_technology(decision):
+def build_opportunities(
+    option_a,
+    option_b,
+    winner,
+    domain
+):
 
-    recommendation = (
-        "Choose the technology that satisfies the current "
-        "functional requirements while keeping deployment, "
-        "maintenance and future scalability manageable."
-    )
+    return [
 
-    summary = (
-        "DecisionLens identified this as a technology decision. "
-        "The analysis considers performance, ecosystem maturity, "
-        "development speed, maintainability and scalability."
-    )
+        f"{winner} can provide stronger alignment with the "
+        f"current decision objective",
 
-    factors = [
-        "Technical requirements and expected workload",
-        "Performance and scalability",
-        "Developer ecosystem and available tooling",
-        "Maintenance and deployment complexity"
+        f"Combining useful capabilities from {option_a} and "
+        f"{option_b} may create additional future flexibility",
+
+        "The decision can be revisited as new evidence becomes available",
+
+        "Additional domain-specific evidence can improve future recommendations"
     ]
-
-    risks = [
-        "Vendor or framework lock-in",
-        "Migration cost later",
-        "Limited ecosystem or community support",
-        "Complexity exceeding the actual project requirements"
-    ]
-
-    opportunities = [
-        "Faster development",
-        "Better scalability",
-        "Access to mature libraries and tooling",
-        "Improved maintainability"
-    ]
-
-    tradeoffs = [
-        "Development speed versus customization",
-        "Performance versus simplicity",
-        "Ecosystem maturity versus flexibility",
-        "Short-term implementation versus long-term maintenance"
-    ]
-
-    return (
-        recommendation,
-        summary,
-        factors,
-        risks,
-        opportunities,
-        tradeoffs
-    )
 
 
 # ============================================================
-# GENERAL ANALYSIS
+# TRADE-OFFS
 # ============================================================
 
-def analyze_general(decision):
+def build_tradeoffs(
+    option_a,
+    option_b,
+    score_a,
+    score_b
+):
 
-    option_a, option_b = extract_options(
-        decision
+    return [
+
+        f"{option_a}: {score_a}/100 versus "
+        f"{option_b}: {score_b}/100",
+
+        "Higher potential value may require greater effort or risk",
+
+        "Specialization can improve depth while reducing some flexibility",
+
+        "A short-term advantage may not always produce the strongest "
+        "long-term outcome"
+    ]
+
+
+# ============================================================
+# CONFIDENCE
+# ============================================================
+
+def calculate_confidence(
+    decision,
+    option_a,
+    option_b,
+    score_a,
+    score_b,
+    retrieved
+):
+
+    difference = abs(
+        score_a - score_b
     )
 
+    confidence = 58
 
+    # More specific decision
+    if len(decision.split()) >= 8:
+        confidence += 5
+
+    if len(decision.split()) >= 15:
+        confidence += 4
+
+    # Options successfully extracted
     if option_a and option_b:
+        confidence += 8
 
-        recommendation = (
-            f"DecisionLens recommends comparing {option_a} "
-            f"and {option_b} against the actual objective, "
-            f"constraints, expected benefit and downside risk "
-            f"rather than choosing on a single criterion."
+    # Evidence
+    if retrieved:
+        confidence += min(
+            12,
+            len(retrieved) * 3
         )
 
-    else:
+    # Separation between options
+    if difference >= 15:
+        confidence += 8
 
-        recommendation = (
-            "Prioritize the option that best satisfies the "
-            "decision's primary objective while remaining "
-            "realistic within your constraints and acceptable "
-            "risk level."
+    elif difference >= 10:
+        confidence += 6
+
+    elif difference >= 5:
+        confidence += 3
+
+    confidence = max(
+        50,
+        min(
+            95,
+            confidence
         )
+    )
 
+    return int(confidence)
+
+
+# ============================================================
+# FALLBACK ANALYSIS
+# ============================================================
+
+def analyze_without_options(
+    decision,
+    domain,
+    retrieved
+):
+
+    domain_name = domain.replace(
+        "_",
+        " "
+    )
+
+    recommendation = (
+        "Prioritize the path that most directly satisfies "
+        "your primary objective while remaining feasible "
+        "within your available time, resources and acceptable risk."
+    )
 
     summary = (
-        "DecisionLens evaluated the decision using objective "
-        "alignment, expected value, constraints, risks, "
-        "opportunities and trade-offs."
+        f"DecisionLens classified this as a {domain_name} decision. "
+        f"The analysis evaluates objective alignment, feasibility, "
+        f"risk, expected value and available evidence."
     )
 
     factors = [
+
         "Alignment with the primary objective",
-        "Expected value and practical impact",
-        "Cost, time and resource requirements",
-        "Feasibility within current constraints"
+
+        "Expected practical value",
+
+        "Time, cost and resource requirements",
+
+        "Feasibility within current constraints",
+
+        "Long-term sustainability"
     ]
 
     risks = [
+
         "Uncertainty in future outcomes",
+
         "Opportunity cost",
-        "Implementation or execution risk",
-        "Unexpected changes in constraints"
+
+        "Execution or implementation risk",
+
+        "Changes in constraints or assumptions"
     ]
 
     opportunities = [
+
         "Potential long-term value",
+
         "Future flexibility",
-        "Ability to create additional opportunities",
-        "Potential improvement in efficiency or outcomes"
+
+        "Additional learning or growth",
+
+        "Improved efficiency or outcomes"
     ]
 
     tradeoffs = [
+
         "Short-term benefit versus long-term value",
+
         "Risk versus potential return",
+
         "Flexibility versus commitment",
+
         "Cost versus expected benefit"
     ]
 
-    return (
-        recommendation,
-        summary,
-        factors,
-        risks,
-        opportunities,
-        tradeoffs
-    )
+    confidence = 62
+
+    if retrieved:
+        confidence += min(
+            12,
+            len(retrieved) * 3
+        )
+
+    return {
+
+        "decision":
+            decision,
+
+        "domain":
+            domain,
+
+        "recommended_option":
+            None,
+
+        "confidence":
+            min(
+                confidence,
+                90
+            ),
+
+        "option_scores":
+            {},
+
+        "recommendation":
+            recommendation,
+
+        "summary":
+            summary,
+
+        "factors":
+            factors,
+
+        "risks":
+            risks,
+
+        "opportunities":
+            opportunities,
+
+        "tradeoffs":
+            tradeoffs,
+
+        "evidence":
+            retrieved,
+
+        "evidence_count":
+            len(retrieved)
+    }
 
 
 # ============================================================
@@ -954,106 +1218,122 @@ def analyze_decision(decision):
         limit=5
     )
 
-
-    # --------------------------------------------------------
-    # DOMAIN-SPECIFIC ANALYSIS
-    # --------------------------------------------------------
-
-    if domain == "ml_ds":
-
-        (
-            recommendation,
-            summary,
-            factors,
-            risks,
-            opportunities,
-            tradeoffs
-        ) = analyze_ml_ds(decision)
-
-
-    elif domain == "career":
-
-        (
-            recommendation,
-            summary,
-            factors,
-            risks,
-            opportunities,
-            tradeoffs
-        ) = analyze_career(decision)
-
-
-    elif domain == "education":
-
-        (
-            recommendation,
-            summary,
-            factors,
-            risks,
-            opportunities,
-            tradeoffs
-        ) = analyze_education(decision)
-
-
-    elif domain == "business":
-
-        (
-            recommendation,
-            summary,
-            factors,
-            risks,
-            opportunities,
-            tradeoffs
-        ) = analyze_business(decision)
-
-
-    elif domain == "technology":
-
-        (
-            recommendation,
-            summary,
-            factors,
-            risks,
-            opportunities,
-            tradeoffs
-        ) = analyze_technology(decision)
-
-
-    else:
-
-        (
-            recommendation,
-            summary,
-            factors,
-            risks,
-            opportunities,
-            tradeoffs
-        ) = analyze_general(decision)
-
-
-    # --------------------------------------------------------
-    # CONFIDENCE
-    # --------------------------------------------------------
-
-    confidence = 68
-
-    if domain != "general":
-        confidence += 8
-
-    if retrieved:
-        confidence += 6
-
-    if len(decision.split()) >= 12:
-        confidence += 5
-
-    confidence = min(
-        confidence,
-        94
+    option_a, option_b = extract_options(
+        decision
     )
 
+    # --------------------------------------------------------
+    # No clear two-option decision
+    # --------------------------------------------------------
+
+    if not option_a or not option_b:
+
+        return analyze_without_options(
+            decision,
+            domain,
+            retrieved
+        )
 
     # --------------------------------------------------------
-    # FINAL RESPONSE
+    # Score both options
+    # --------------------------------------------------------
+
+    score_a = score_option(
+        option_a,
+        decision,
+        retrieved
+    )
+
+    score_b = score_option(
+        option_b,
+        decision,
+        retrieved
+    )
+
+    # --------------------------------------------------------
+    # Recommendation
+    # --------------------------------------------------------
+
+    recommendation, winner = build_recommendation(
+        option_a,
+        option_b,
+        score_a,
+        score_b,
+        domain,
+        decision
+    )
+
+    # --------------------------------------------------------
+    # Objectives
+    # --------------------------------------------------------
+
+    objectives = detect_objectives(
+        decision
+    )
+
+    # --------------------------------------------------------
+    # Summary
+    # --------------------------------------------------------
+
+    summary = build_summary(
+        option_a,
+        option_b,
+        score_a,
+        score_b,
+        domain,
+        retrieved
+    )
+
+    # --------------------------------------------------------
+    # Analysis sections
+    # --------------------------------------------------------
+
+    factors = build_factors(
+        option_a,
+        option_b,
+        score_a,
+        score_b,
+        domain,
+        objectives
+    )
+
+    risks = build_risks(
+        option_a,
+        option_b,
+        score_a,
+        score_b,
+        domain
+    )
+
+    opportunities = build_opportunities(
+        option_a,
+        option_b,
+        winner,
+        domain
+    )
+
+    tradeoffs = build_tradeoffs(
+        option_a,
+        option_b,
+        score_a,
+        score_b
+    )
+
+    # --------------------------------------------------------
+    # Confidence
+    # --------------------------------------------------------
+
+    confidence = calculate_confidence(
+        decision,
+        option_a,
+        option_b,
+        score_a,
+        score_b,
+        retrieved
+    )
+
+    # --------------------------------------------------------
+    # Final structured result
     # --------------------------------------------------------
 
     return {
@@ -1064,14 +1344,33 @@ def analyze_decision(decision):
         "domain":
             domain,
 
+        "options": [
+
+            option_a,
+
+            option_b
+        ],
+
+        "recommended_option":
+            winner,
+
+        "confidence":
+            confidence,
+
+        "option_scores": {
+
+            option_a:
+                score_a,
+
+            option_b:
+                score_b
+        },
+
         "recommendation":
             recommendation,
 
         "summary":
             summary,
-
-        "confidence":
-            confidence,
 
         "factors":
             factors,
@@ -1086,7 +1385,13 @@ def analyze_decision(decision):
             tradeoffs,
 
         "evidence":
-            retrieved
+            retrieved,
+
+        "evidence_count":
+            len(retrieved),
+
+        "objectives":
+            objectives
     }
 
 
@@ -1145,6 +1450,9 @@ def health():
         "service":
             "DecisionLens AI",
 
+        "engine":
+            "RAG Decision Intelligence",
+
         "knowledge_base":
             len(KNOWLEDGE_BASE)
 
@@ -1167,14 +1475,12 @@ def analyze():
             silent=True
         ) or {}
 
-
         decision = str(
             data.get(
                 "decision",
                 ""
             )
         ).strip()
-
 
         if not decision:
 
@@ -1185,7 +1491,6 @@ def analyze():
 
             }), 400
 
-
         if len(decision) < 5:
 
             return jsonify({
@@ -1195,16 +1500,13 @@ def analyze():
 
             }), 400
 
-
         result = analyze_decision(
             decision
         )
 
-
         return jsonify(
             result
         )
-
 
     except Exception as error:
 
@@ -1213,11 +1515,13 @@ def analyze():
             repr(error)
         )
 
-
         return jsonify({
 
             "error":
-                "The decision engine encountered an error."
+                "The decision engine encountered an error.",
+
+            "details":
+                str(error)
 
         }), 500
 
@@ -1235,13 +1539,8 @@ if __name__ == "__main__":
         )
     )
 
-
     app.run(
-
         host="0.0.0.0",
-
         port=port,
-
         debug=False
-
     )
