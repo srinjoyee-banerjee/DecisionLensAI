@@ -1,842 +1,224 @@
-document.addEventListener("DOMContentLoaded", () => {
-
-    const analyzeBtn = document.getElementById("analyzeBtn");
-
-    /*
-    ============================================================
-    RESULT PAGE
-    ============================================================
-    */
-
-    if (!analyzeBtn) {
-        loadResults();
-        return;
-    }
+// ============================================================
+// DECISIONLENS AI
+// FRONTEND CONTROLLER
+// ============================================================
 
 
-    /*
-    ============================================================
-    DASHBOARD / INPUT PAGE
-    ============================================================
-    */
+const API_URL = "/api/analyze";
+
+
+
+// ============================================================
+// ANALYZE DECISION
+// ============================================================
+
+
+async function analyzeDecision(){
+
 
     const input =
-        document.getElementById("decisionInput");
-
-    const btnText =
-        document.getElementById("btnText");
-
-    const errorBox =
-        document.getElementById("errorBox");
-
-
-    analyzeBtn.addEventListener("click", async () => {
-
-        const decision =
-            input ? input.value.trim() : "";
-
-
-        /*
-        --------------------------------------------------------
-        EMPTY INPUT
-        --------------------------------------------------------
-        */
-
-        if (!decision) {
-
-            showError(
-                errorBox,
-                "Please describe the decision before starting the analysis."
-            );
-
-            if (input) {
-                input.focus();
-            }
-
-            return;
-        }
-
-
-        hideError(errorBox);
-
-
-        /*
-        --------------------------------------------------------
-        LOADING
-        --------------------------------------------------------
-        */
-
-        setLoadingState(
-            analyzeBtn,
-            btnText,
-            true
+        document.getElementById(
+            "decisionInput"
         );
 
 
-        try {
-
-            const response = await fetch(
-                "/api/analyze",
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Accept": "application/json"
-                    },
-
-                    body: JSON.stringify({
-                        decision: decision
-                    })
-                }
-            );
-
-
-            /*
-            ----------------------------------------------------
-            RESPONSE
-            ----------------------------------------------------
-            */
-
-            const contentType =
-                response.headers.get("content-type") || "";
-
-            let data;
-
-
-            if (
-                contentType.includes(
-                    "application/json"
-                )
-            ) {
-
-                data = await response.json();
-
-            } else {
-
-                const text =
-                    await response.text();
-
-                throw new Error(
-                    text ||
-                    "Server returned an invalid response."
-                );
-            }
-
-
-            /*
-            ----------------------------------------------------
-            BACKEND ERROR
-            ----------------------------------------------------
-            */
-
-            if (!response.ok) {
-
-                throw new Error(
-                    data.error ||
-                    data.message ||
-                    "Analysis failed."
-                );
-            }
-
-
-            /*
-            ----------------------------------------------------
-            VALIDATE
-            ----------------------------------------------------
-            */
-
-            if (
-                !data ||
-                typeof data !== "object"
-            ) {
-
-                throw new Error(
-                    "The AI returned an invalid analysis."
-                );
-            }
-
-
-            /*
-            ----------------------------------------------------
-            SAVE RESULT
-            ----------------------------------------------------
-            */
-
-            localStorage.setItem(
-                "decisionLensResult",
-                JSON.stringify(data)
-            );
-
-
-            /*
-            ----------------------------------------------------
-            GO TO RESULTS
-            ----------------------------------------------------
-            */
-
-            window.location.href =
-                "/result.html";
-
-        }
-
-
-        catch (error) {
-
-            console.error(
-                "DecisionLens analysis error:",
-                error
-            );
-
-
-            showError(
-                errorBox,
-                "Analysis failed: " +
-                (
-                    error.message ||
-                    "Please try again."
-                )
-            );
-
-
-            setLoadingState(
-                analyzeBtn,
-                btnText,
-                false
-            );
-
-        }
-
-    });
-
-});
-
-
-/*
-================================================================
-LOAD RESULTS
-================================================================
-*/
-
-function loadResults() {
-
-    const raw =
-        localStorage.getItem(
-            "decisionLensResult"
-        );
-
-
-    /*
-    ------------------------------------------------------------
-    NO RESULT
-    ------------------------------------------------------------
-    */
-
-    if (!raw) {
-
-        showNoResultState();
-
-        return;
-    }
-
-
-    try {
-
-        const data =
-            JSON.parse(raw);
-
-
-        /*
-        --------------------------------------------------------
-        BASIC INFORMATION
-        --------------------------------------------------------
-        */
-
-        const decisionText =
-            document.getElementById(
-                "decisionText"
-            );
-
-        const recommendation =
-            document.getElementById(
-                "recommendation"
-            );
-
-        const summary =
-            document.getElementById(
-                "summary"
-            );
-
-        const confidence =
-            document.getElementById(
-                "confidence"
-            );
-
-
-        if (decisionText) {
-
-            decisionText.textContent =
-                data.decision ||
-                "No decision provided.";
-        }
-
-
-        if (recommendation) {
-
-            recommendation.textContent =
-                cleanMarkdown(
-                    data.recommendation ||
-                    "No recommendation available."
-                );
-        }
-
-
-        if (summary) {
-
-            summary.textContent =
-                data.summary ||
-                "No summary available.";
-        }
-
-
-        /*
-        --------------------------------------------------------
-        CONFIDENCE
-        --------------------------------------------------------
-        */
-
-        if (confidence) {
-
-            const value =
-                Number(data.confidence);
-
-
-            if (
-                !Number.isNaN(value)
-            ) {
-
-                confidence.textContent =
-                    Math.round(value) +
-                    "%";
-
-            } else {
-
-                confidence.textContent =
-                    "—";
-            }
-        }
-
-
-        /*
-        --------------------------------------------------------
-        LISTS
-        --------------------------------------------------------
-        */
-
-        renderList(
-            "factors",
-            data.factors
-        );
-
-        renderList(
-            "risks",
-            data.risks
-        );
-
-        renderList(
-            "opportunities",
-            data.opportunities
-        );
-
-        renderList(
-            "tradeoffs",
-            data.tradeoffs
-        );
-
-
-        /*
-        --------------------------------------------------------
-        EVIDENCE
-        --------------------------------------------------------
-        */
-
-        renderEvidence(
-            data.evidence
-        );
-
-    }
-
-
-    catch (error) {
+    if(!input){
 
         console.error(
-            "DecisionLens result error:",
+            "Decision input not found"
+        );
+
+        return;
+
+    }
+
+
+
+    const decision =
+        input.value.trim();
+
+
+
+    if(decision.length < 5){
+
+        alert(
+            "Please enter a proper decision."
+        );
+
+        return;
+
+    }
+
+
+
+    const button =
+        document.getElementById(
+            "analyzeBtn"
+        );
+
+
+
+    if(button){
+
+        button.innerHTML =
+        "ANALYZING...";
+
+        button.disabled=true;
+
+    }
+
+
+
+    try{
+
+
+        const response =
+        await fetch(
+            API_URL,
+            {
+
+                method:"POST",
+
+                headers:{
+
+                    "Content-Type":
+                    "application/json"
+
+                },
+
+
+                body:
+                JSON.stringify({
+
+                    decision:decision
+
+                })
+
+            }
+        );
+
+
+
+        const data =
+        await response.json();
+
+
+
+        console.log(
+            "Decision Result:",
+            data
+        );
+
+
+
+        if(data.error){
+
+
+            alert(
+                data.error
+            );
+
+
+            return;
+
+        }
+
+
+
+
+        // SAVE RESULT FOR RESULT PAGE
+
+        localStorage.setItem(
+
+            "decisionResult",
+
+            JSON.stringify(data)
+
+        );
+
+
+
+        // MOVE TO REPORT
+
+        window.location.href =
+        "/result.html";
+
+
+
+    }
+
+
+
+    catch(error){
+
+
+        console.error(
             error
         );
 
-        showResultError();
-    }
 
-}
-
-
-/*
-================================================================
-CLEAN MARKDOWN
-================================================================
-*/
-
-function cleanMarkdown(text) {
-
-    return String(text)
-        .replace(/\*\*(.*?)\*\*/g, "$1")
-        .replace(/__(.*?)__/g, "$1")
-        .replace(/`(.*?)`/g, "$1");
-
-}
+        alert(
+            "Unable to connect with DecisionLens AI."
+        );
 
 
-/*
-================================================================
-RENDER LIST
-================================================================
-*/
-
-function renderList(
-    id,
-    items
-) {
-
-    const element =
-        document.getElementById(id);
-
-
-    if (!element) {
-        return;
     }
 
 
-    element.innerHTML = "";
+
+    finally{
 
 
-    if (!Array.isArray(items)) {
+        if(button){
 
-        items = [];
-    }
+            button.innerHTML =
+            "ANALYZE DECISION →";
 
+            button.disabled=false;
 
-    if (items.length === 0) {
-
-        const li =
-            document.createElement("li");
-
-        li.textContent =
-            "No major items identified.";
-
-        element.appendChild(li);
-
-        return;
-    }
-
-
-    items.forEach(item => {
-
-        const li =
-            document.createElement("li");
-
-
-        let text;
-
-
-        if (
-            typeof item === "object" &&
-            item !== null
-        ) {
-
-            text =
-                item.text ||
-                item.title ||
-                item.description ||
-                JSON.stringify(item);
-
-        } else {
-
-            text =
-                String(item);
         }
 
 
-        li.textContent =
-            cleanMarkdown(text);
+    }
 
-
-        element.appendChild(li);
-
-    });
 
 }
 
 
-/*
-================================================================
-RENDER EVIDENCE
-================================================================
-*/
 
-function renderEvidence(items) {
 
-    const container =
-        document.getElementById(
-            "evidenceList"
-        );
 
+// ============================================================
+// PAGE LOAD
+// ============================================================
 
-    if (!container) {
-        return;
-    }
 
+document.addEventListener(
+"DOMContentLoaded",
+()=>{
 
-    container.innerHTML = "";
 
-
-    if (!Array.isArray(items)) {
-
-        items = [];
-    }
-
-
-    /*
-    ------------------------------------------------------------
-    NO EVIDENCE
-    ------------------------------------------------------------
-    */
-
-    if (items.length === 0) {
-
-        const div =
-            document.createElement("div");
-
-        div.className =
-            "evidence-item";
-
-
-        div.innerHTML = `
-            <strong>
-                DecisionLens Knowledge Base
-            </strong>
-
-            <p>
-                No directly matching knowledge-base
-                evidence was retrieved for this decision.
-            </p>
-        `;
-
-
-        container.appendChild(div);
-
-        return;
-    }
-
-
-    /*
-    ------------------------------------------------------------
-    EVIDENCE ITEMS
-    ------------------------------------------------------------
-    */
-
-    items.forEach(item => {
-
-        const div =
-            document.createElement("div");
-
-
-        div.className =
-            "evidence-item";
-
-
-        const title =
-            item &&
-            typeof item === "object"
-
-                ? (
-                    item.title ||
-                    item.source ||
-                    "Retrieved intelligence"
-                )
-
-                : "Retrieved intelligence";
-
-
-        const content =
-            item &&
-            typeof item === "object"
-
-                ? (
-                    item.content ||
-                    item.text ||
-                    item.description ||
-                    ""
-                )
-
-                : String(item);
-
-
-        div.innerHTML = `
-
-            <div class="evidence-title">
-                ${escapeHTML(title)}
-            </div>
-
-            <p>
-                ${escapeHTML(content)}
-            </p>
-
-        `;
-
-
-        container.appendChild(div);
-
-    });
-
-}
-
-
-/*
-================================================================
-ESCAPE HTML
-================================================================
-*/
-
-function escapeHTML(text) {
-
-    const div =
-        document.createElement("div");
-
-
-    div.textContent =
-        text == null
-            ? ""
-            : String(text);
-
-
-    return div.innerHTML;
-
-}
-
-
-/*
-================================================================
-LOADING STATE
-================================================================
-*/
-
-function setLoadingState(
-    button,
-    buttonText,
-    loading
-) {
-
-    if (!button) {
-        return;
-    }
-
-
-    if (loading) {
-
-        button.classList.add(
-            "loading"
-        );
-
-        button.disabled = true;
-
-
-        if (buttonText) {
-
-            buttonText.textContent =
-                "AI ANALYZING...";
-        }
-
-    } else {
-
-        button.classList.remove(
-            "loading"
-        );
-
-        button.disabled = false;
-
-
-        if (buttonText) {
-
-            buttonText.textContent =
-                "ANALYZE DECISION";
-        }
-
-    }
-
-}
-
-
-/*
-================================================================
-ERROR
-================================================================
-*/
-
-function showError(
-    errorBox,
-    message
-) {
-
-    if (!errorBox) {
-        return;
-    }
-
-
-    errorBox.style.display =
-        "block";
-
-
-    errorBox.textContent =
-        message;
-
-}
-
-
-/*
-================================================================
-HIDE ERROR
-================================================================
-*/
-
-function hideError(errorBox) {
-
-    if (!errorBox) {
-        return;
-    }
-
-
-    errorBox.style.display =
-        "none";
-
-
-    errorBox.textContent =
-        "";
-
-}
-
-
-/*
-================================================================
-NO RESULT
-================================================================
-*/
-
-function showNoResultState() {
-
-    const decisionText =
-        document.getElementById(
-            "decisionText"
-        );
-
-    const recommendation =
-        document.getElementById(
-            "recommendation"
-        );
-
-    const summary =
-        document.getElementById(
-            "summary"
-        );
-
-    const confidence =
-        document.getElementById(
-            "confidence"
-        );
-
-
-    if (decisionText) {
-
-        decisionText.textContent =
-            "No previous analysis found.";
-    }
-
-
-    if (recommendation) {
-
-        recommendation.textContent =
-            "No analysis available.";
-    }
-
-
-    if (summary) {
-
-        summary.textContent =
-            "Start a new decision analysis from the workspace.";
-    }
-
-
-    if (confidence) {
-
-        confidence.textContent =
-            "—";
-    }
-
-
-    renderList(
-        "factors",
-        []
+    const button =
+    document.getElementById(
+        "analyzeBtn"
     );
 
-    renderList(
-        "risks",
-        []
-    );
-
-    renderList(
-        "opportunities",
-        []
-    );
-
-    renderList(
-        "tradeoffs",
-        []
-    );
-
-    renderEvidence([]);
-
-}
 
 
-/*
-================================================================
-RESULT ERROR
-================================================================
-*/
+    if(button){
 
-function showResultError() {
 
-    const recommendation =
-        document.getElementById(
-            "recommendation"
-        );
+        button.addEventListener(
 
-    const summary =
-        document.getElementById(
-            "summary"
+            "click",
+
+            analyzeDecision
+
         );
 
 
-    if (recommendation) {
-
-        recommendation.textContent =
-            "Unable to load analysis.";
     }
 
 
-    if (summary) {
 
-        summary.textContent =
-            "The saved DecisionLens result could not be read. Please return to the workspace and run the analysis again.";
-    }
-
-}
+});
