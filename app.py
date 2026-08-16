@@ -1,13 +1,22 @@
 # ============================================================
 # DECISIONLENS AI
-# AI DECISION SIMULATION & INTELLIGENCE PLATFORM
-# COMPLETE REWRITE
-# PART 1/3
+# AI DECISION INTELLIGENCE PLATFORM
+# ADVANCED OR-DECISION ENGINE
+#
+# APP.PY PART 1/5
+# FRONTEND COMPATIBLE VERSION
 # ============================================================
 
 
-from flask import Flask, request, jsonify, send_from_directory
+from flask import (
+    Flask,
+    request,
+    jsonify,
+    send_from_directory
+)
+
 from flask_cors import CORS
+
 
 import os
 import json
@@ -23,6 +32,7 @@ import re
 app = Flask(__name__)
 
 CORS(app)
+
 
 
 BASE_DIR = os.path.dirname(
@@ -44,19 +54,27 @@ KB_FILE = os.path.join(
 
 
 
+
 # ============================================================
-# KNOWLEDGE BASE LOADER
+# LOAD KNOWLEDGE BASE
 # ============================================================
 
 
 def load_knowledge():
 
+
     if not os.path.exists(KB_FILE):
+
+        print(
+            "Knowledge base not found"
+        )
 
         return []
 
 
+
     try:
+
 
         with open(
             KB_FILE,
@@ -64,7 +82,9 @@ def load_knowledge():
             encoding="utf-8"
         ) as file:
 
-            data = json.load(file)
+
+            data=json.load(file)
+
 
 
 
@@ -74,31 +94,40 @@ def load_knowledge():
 
 
 
+
+
         if isinstance(data,dict):
+
 
             for key in [
 
-                "documents",
                 "knowledge",
+                "documents",
                 "entries",
                 "data"
 
             ]:
+
 
                 if key in data:
 
                     return data[key]
 
 
+
     except Exception as e:
 
+
         print(
-            "Knowledge Error:",
+            "KB ERROR:",
             e
         )
 
 
+
     return []
+
+
 
 
 
@@ -107,63 +136,73 @@ KB = load_knowledge()
 
 
 
+
+
+
 # ============================================================
-# TEXT UNDERSTANDING ENGINE
+# TEXT ENGINE
 # ============================================================
 
 
+STOPWORDS={
 
-STOPWORDS = {
 
-"the",
-"and",
-"for",
-"with",
-"should",
-"would",
-"could",
-"which",
-"what",
-"is",
-"are",
-"better",
-"best",
-"choose",
-"between",
-"or",
-"vs",
-"versus",
-"my",
-"i",
-"me",
-"to",
-"of",
-"in",
-"a",
-"an",
-"do"
+    "the",
+    "and",
+    "for",
+    "with",
+    "should",
+    "would",
+    "could",
+    "which",
+    "what",
+    "is",
+    "are",
+    "better",
+    "best",
+    "choose",
+    "choice",
+    "between",
+    "or",
+    "vs",
+    "versus",
+    "my",
+    "i",
+    "me",
+    "to",
+    "of",
+    "in",
+    "a",
+    "an"
 
 }
 
 
 
 
+
 def normalize(text):
+
 
     return str(text).lower().strip()
 
 
 
 
+
+
+
 def tokenize(text):
 
-    words = re.findall(
+
+    words=re.findall(
 
         r"[a-zA-Z0-9+#.-]{3,}",
 
         normalize(text)
 
     )
+
 
 
     return [
@@ -180,6 +219,9 @@ def tokenize(text):
 
 
 
+
+
+
 def extract_text(item):
 
 
@@ -189,9 +231,11 @@ def extract_text(item):
 
 
 
+
     if isinstance(item,dict):
 
-        content=[]
+
+        output=[]
 
 
         for key in [
@@ -205,16 +249,19 @@ def extract_text(item):
 
         ]:
 
+
             if item.get(key):
 
-                content.append(
+                output.append(
 
                     str(item[key])
 
                 )
 
 
-        return " ".join(content)
+
+        return " ".join(output)
+
 
 
 
@@ -224,104 +271,375 @@ def extract_text(item):
 
 
 
-# ============================================================
-# RAG RETRIEVAL
-# ============================================================
-
-
-
-def retrieve_evidence(question):
-
-
-    query=set(
-
-        tokenize(question)
-
-    )
-
-
-    results=[]
-
-
-
-    for item in KB:
-
-
-        text=extract_text(item)
-
-
-        tokens=set(
-
-            tokenize(text)
-
-        )
-
-
-        score=len(
-
-            query.intersection(tokens)
-
-        )
-
-
-        if score>0:
-
-
-            results.append({
-
-                "content":text,
-
-                "score":score
-
-            })
-
-
-
-
-    results.sort(
-
-        key=lambda x:x["score"],
-
-        reverse=True
-
-    )
-
-
-    return results[:5]
-
-
 
 
 
 # ============================================================
-# OPTION EXTRACTION
+# QUERY INTELLIGENCE ENGINE
 # ============================================================
 
+
+
+def understand_query(question):
+
+
+    text=normalize(question)
+
+
+
+    intelligence={
+
+
+        "domain":[],
+
+        "goals":[],
+
+        "decision_type":"comparison"
+
+    }
+
+
+
+
+
+
+
+    # -----------------------------
+    # DOMAIN DETECTION
+    # -----------------------------
+
+
+    domains={
+
+
+
+        "technology":[
+
+
+            "ai",
+            "ml",
+            "machine learning",
+            "data science",
+            "python",
+            "coding",
+            "software",
+            "robotics",
+            "cybersecurity"
+
+        ],
+
+
+
+
+        "career":[
+
+
+            "job",
+            "career",
+            "salary",
+            "profession",
+            "role"
+
+        ],
+
+
+
+
+        "education":[
+
+
+            "phd",
+            "degree",
+            "college",
+            "study",
+            "research",
+            "course"
+
+        ],
+
+
+
+
+        "finance":[
+
+
+            "money",
+            "investment",
+            "business",
+            "startup"
+
+        ],
+
+
+
+
+        "creative":[
+
+
+            "dance",
+            "sing",
+            "music",
+            "art",
+            "design"
+
+        ]
+
+
+
+    }
+
+
+
+
+
+
+
+    for domain,words in domains.items():
+
+
+        for word in words:
+
+
+            if word in text:
+
+
+                intelligence["domain"].append(
+
+                    domain
+
+                )
+
+                break
+
+
+
+
+
+
+    if not intelligence["domain"]:
+
+
+        intelligence["domain"]=[
+
+            "general"
+
+        ]
+
+
+
+
+
+
+
+
+
+    # -----------------------------
+    # GOAL DETECTION
+    # -----------------------------
+
+
+    goals={
+
+
+
+        "salary":[
+
+            "salary",
+            "money",
+            "income",
+            "earning",
+            "pay"
+
+        ],
+
+
+
+
+        "growth":[
+
+            "future",
+            "growth",
+            "scope",
+            "career",
+            "opportunity"
+
+        ],
+
+
+
+
+        "learning":[
+
+            "learn",
+            "skill",
+            "knowledge",
+            "improve"
+
+        ],
+
+
+
+
+        "research":[
+
+            "research",
+            "innovation",
+            "paper"
+
+        ],
+
+
+
+
+        "passion":[
+
+            "love",
+            "passion",
+            "interest",
+            "enjoy"
+
+        ],
+
+
+
+
+        "stability":[
+
+            "stable",
+            "safe",
+            "security"
+
+        ]
+
+
+
+    }
+
+
+
+
+
+
+
+
+    for goal,words in goals.items():
+
+
+        for word in words:
+
+
+            if word in text:
+
+
+                intelligence["goals"].append(
+
+                    goal
+
+                )
+
+                break
+
+
+
+
+
+
+
+    if not intelligence["goals"]:
+
+
+        intelligence["goals"]=[
+
+            "growth",
+            "future"
+
+        ]
+
+
+
+
+
+
+
+
+    # -----------------------------
+    # DECISION TYPE
+    # -----------------------------
+
+
+    if any(x in text for x in [
+
+        "buy",
+        "purchase",
+        "invest"
+
+    ]):
+
+
+        intelligence["decision_type"]="financial"
+
+
+
+
+    elif any(x in text for x in [
+
+        "learn",
+        "become",
+        "roadmap"
+
+    ]):
+
+
+        intelligence["decision_type"]="guidance"
+
+
+
+
+    return intelligence
+    # ============================================================
+# PART 2/5
+# OPTION UNDERSTANDING + RAG INTELLIGENCE
+# ============================================================
+
+
+
+
+# ============================================================
+# OPTION EXTRACTION ENGINE
+# ============================================================
 
 
 def clean_option(text):
 
 
-    remove=[
+    text=text.strip(
+        " ?.,:"
+    )
+
+
+
+    remove_words=[
+
 
         "should i",
+
         "should we",
+
         "which is better",
+
         "what is better",
+
         "choose",
+
+        "select",
+
         "pick"
 
     ]
 
 
-    text=text.strip(
 
-        " ?.,:"
-
-    )
-
-
-    for word in remove:
+    for word in remove_words:
 
 
         text=re.sub(
@@ -337,7 +655,10 @@ def clean_option(text):
         )
 
 
+
     return text.strip()
+
+
 
 
 
@@ -349,23 +670,46 @@ def extract_options(question):
     patterns=[
 
 
+
+        # Python vs Java
+
+
         r"(.+?)\s+vs\.?\s+(.+)",
+
+
+
+
+        # between A and B
 
 
         r"between\s+(.+?)\s+and\s+(.+)",
 
 
+
+
+        # should I A or B
+
+
         r"should i\s+(.+?)\s+or\s+(.+)",
 
 
+
+
+        # A or B
+
+
         r"(.+?)\s+or\s+(.+)"
+
 
 
     ]
 
 
 
+
+
     for pattern in patterns:
+
 
 
         match=re.search(
@@ -379,6 +723,8 @@ def extract_options(question):
         )
 
 
+
+
         if match:
 
 
@@ -389,11 +735,13 @@ def extract_options(question):
             )
 
 
+
             option_b=clean_option(
 
                 match.group(2)
 
             )
+
 
 
 
@@ -410,235 +758,128 @@ def extract_options(question):
 
 
 
+
     return None,None
 
 
 
 
 
-# ============================================================
-# DOMAIN UNDERSTANDING
-# ============================================================
-
-
-
-def detect_domain(question):
-
-
-    text=normalize(question)
-
-
-
-    domains={
-
-
-        "technology":[
-
-            "ai",
-            "ml",
-            "machine learning",
-            "data science",
-            "python",
-            "software",
-            "coding"
-
-        ],
-
-
-
-        "career":[
-
-            "job",
-            "career",
-            "salary",
-            "profession",
-            "role"
-
-        ],
-
-
-
-        "education":[
-
-            "study",
-            "degree",
-            "phd",
-            "research",
-            "college"
-
-        ],
-
-
-
-        "creative":[
-
-            "dance",
-            "sing",
-            "music",
-            "art"
-
-        ],
-
-
-
-        "finance":[
-
-            "money",
-            "investment",
-            "business",
-            "stock"
-
-        ]
-
-    }
-
-
-
-    detected=[]
-
-
-
-    for domain,words in domains.items():
-
-
-        for word in words:
-
-
-            if word in text:
-
-                detected.append(domain)
-
-                break
-
-
-
-
-    return detected or ["general"]
-    # ============================================================
-# USER GOAL UNDERSTANDING ENGINE
-# ============================================================
-
-
-def detect_goals(question):
-
-
-    text=normalize(question)
-
-
-    goals=[]
-
-
-    mapping={
-
-
-        "salary":[
-
-            "salary",
-            "money",
-            "income",
-            "earning",
-            "pay",
-            "package"
-
-        ],
-
-
-
-        "growth":[
-
-            "future",
-            "growth",
-            "career",
-            "opportunity",
-            "long term",
-            "scope"
-
-        ],
-
-
-
-        "learning":[
-
-            "learn",
-            "skill",
-            "knowledge",
-            "improve",
-            "master"
-
-        ],
-
-
-
-        "research":[
-
-            "research",
-            "paper",
-            "phd",
-            "innovation",
-            "scientist"
-
-        ],
-
-
-
-        "stability":[
-
-            "stable",
-            "safe",
-            "security",
-            "reliable"
-
-        ],
-
-
-
-        "passion":[
-
-            "love",
-            "passion",
-            "interest",
-            "enjoy"
-
-        ]
-
-    }
-
-
-
-    for goal,words in mapping.items():
-
-
-        for word in words:
-
-
-            if word in text:
-
-                goals.append(goal)
-
-                break
-
-
-
-    if not goals:
-
-
-        goals=[
-
-            "growth",
-            "future"
-
-        ]
-
-
-
-    return goals
 
 
 
 
 
 # ============================================================
-# OPTION INTELLIGENCE PROFILE
+# ADVANCED RAG RETRIEVAL
+# ============================================================
+
+
+
+def retrieve_evidence(question):
+
+
+    query_tokens=set(
+
+        tokenize(question)
+
+    )
+
+
+
+    results=[]
+
+
+
+
+
+    for item in KB:
+
+
+
+        text=extract_text(item)
+
+
+
+        item_tokens=set(
+
+            tokenize(text)
+
+        )
+
+
+
+        common=query_tokens.intersection(
+
+            item_tokens
+
+        )
+
+
+
+        score=len(common)
+
+
+
+
+
+        # bonus for exact phrases
+
+
+        for token in query_tokens:
+
+
+            if token in normalize(text):
+
+
+                score += 2
+
+
+
+
+
+        if score>0:
+
+
+            results.append({
+
+
+                "content":text,
+
+
+                "score":score
+
+
+            })
+
+
+
+
+
+
+    results.sort(
+
+        key=lambda x:x["score"],
+
+        reverse=True
+
+    )
+
+
+
+
+    return results[:8]
+
+
+
+
+
+
+
+
+
+# ============================================================
+# OPTION PROFILE DATABASE
 # ============================================================
 
 
@@ -655,19 +896,27 @@ def create_option_profile(option):
 
         "salary":50,
 
+
         "growth":50,
+
 
         "learning":50,
 
+
         "research":50,
+
 
         "stability":50,
 
+
         "creativity":50,
+
 
         "difficulty":50,
 
+
         "risk":50
+
 
 
     }
@@ -675,15 +924,22 @@ def create_option_profile(option):
 
 
 
-    # ==========================
-    # TECHNOLOGY
-    # ==========================
+
+
+
+    # ========================================================
+    # TECHNOLOGY OPTIONS
+    # ========================================================
 
 
     if any(x in text for x in [
 
         "machine learning",
+
         "ml",
+
+        "deep learning",
+
         "ai"
 
     ]):
@@ -691,21 +947,24 @@ def create_option_profile(option):
 
         profile.update({
 
+
             "salary":90,
 
             "growth":95,
 
             "learning":95,
 
-            "research":95,
+            "research":90,
 
             "stability":80,
 
             "difficulty":85,
 
-            "risk":40
+            "risk":60
+
 
         })
+
 
 
 
@@ -716,9 +975,10 @@ def create_option_profile(option):
 
         profile.update({
 
+
             "salary":88,
 
-            "growth":85,
+            "growth":88,
 
             "learning":85,
 
@@ -728,7 +988,8 @@ def create_option_profile(option):
 
             "difficulty":70,
 
-            "risk":30
+            "risk":45
+
 
         })
 
@@ -736,21 +997,25 @@ def create_option_profile(option):
 
 
 
-    elif "software" in text:
+
+
+    elif "software" in text or "developer" in text:
 
 
         profile.update({
 
-            "salary":90,
 
-            "growth":90,
+            "salary":85,
 
-            "learning":85,
+            "growth":85,
 
-            "stability":85,
+            "learning":80,
+
+            "stability":90,
 
             "difficulty":75
 
+
         })
 
 
@@ -759,31 +1024,16 @@ def create_option_profile(option):
 
 
 
-    # ==========================
-    # CREATIVE
-    # ==========================
-
-
-
-    if any(x in text for x in [
-
-        "dance",
-        "dancing"
-
-    ]):
+    elif "python" in text:
 
 
         profile.update({
 
-            "creativity":95,
 
-            "growth":75,
+            "learning":90,
 
-            "passion":95,
+            "growth":85
 
-            "stability":60,
-
-            "risk":60
 
         })
 
@@ -791,36 +1041,12 @@ def create_option_profile(option):
 
 
 
-    elif any(x in text for x in [
-
-        "sing",
-        "singing",
-        "music"
-
-    ]):
-
-
-        profile.update({
-
-            "creativity":95,
-
-            "growth":75,
-
-            "passion":95,
-
-            "stability":65,
-
-            "risk":55
-
-        })
 
 
 
-
-
-    # ==========================
-    # EDUCATION
-    # ==========================
+    # ========================================================
+    # EDUCATION OPTIONS
+    # ========================================================
 
 
     if "phd" in text or "research" in text:
@@ -828,17 +1054,94 @@ def create_option_profile(option):
 
         profile.update({
 
+
             "research":95,
 
             "learning":95,
 
-            "growth":85
+            "salary":65,
+
+            "difficulty":90,
+
+            "risk":70
+
 
         })
 
 
 
+
+
+
+
+
+    # ========================================================
+    # CREATIVE OPTIONS
+    # ========================================================
+
+
+    if any(x in text for x in [
+
+        "dance",
+
+        "music",
+
+        "sing",
+
+        "art"
+
+    ]):
+
+
+        profile.update({
+
+
+            "creativity":95,
+
+            "growth":75,
+
+            "passion":95,
+
+            "risk":65
+
+
+        })
+
+
+
+
+
+
+    # ========================================================
+    # BUSINESS OPTIONS
+    # ========================================================
+
+
+    if "startup" in text or "business" in text:
+
+
+        profile.update({
+
+
+            "growth":95,
+
+            "salary":90,
+
+            "risk":90,
+
+            "stability":40
+
+
+        })
+
+
+
+
+
+
     return profile
+
+
 
 
 
@@ -891,56 +1194,76 @@ def build_matrix(option_a,option_b):
 
 
 
+
     return {
+
 
 
         "labels":factors,
 
 
+
         option_a:[
 
-            profile_a[x]
+            profile_a.get(
 
-            for x in factors
+                factor,
+
+                50
+
+            )
+
+            for factor in factors
 
         ],
 
 
 
+
         option_b:[
 
-            profile_b[x]
+            profile_b.get(
 
-            for x in factors
+                factor,
+
+                50
+
+            )
+
+            for factor in factors
 
         ]
 
+
     }
+    # ============================================================
+# PART 3/5
+# DECISION SCORING + SIMULATION ENGINE
+# ============================================================
 
 
 
 
 
 # ============================================================
-# DECISION CALCULATION ENGINE
+# GOAL WEIGHTING ENGINE
 # ============================================================
 
 
-
-def calculate_scores(option_a,option_b,goals):
+def calculate_scores(
+        option_a,
+        option_b,
+        goals
+):
 
 
     profile_a=create_option_profile(
-
         option_a
-
     )
 
 
     profile_b=create_option_profile(
-
         option_b
-
     )
 
 
@@ -948,6 +1271,8 @@ def calculate_scores(option_a,option_b,goals):
     score_a=0
 
     score_b=0
+
+
 
 
 
@@ -973,13 +1298,21 @@ def calculate_scores(option_a,option_b,goals):
 
 
 
-    score_a/=len(goals)
 
-    score_b/=len(goals)
+    score_a = score_a / len(goals)
+
+    score_b = score_b / len(goals)
 
 
 
-    return round(score_a),round(score_b)
+    return (
+
+        round(score_a),
+
+        round(score_b)
+
+    )
+
 
 
 
@@ -988,7 +1321,7 @@ def calculate_scores(option_a,option_b,goals):
 
 
 # ============================================================
-# RISK REWARD ANALYSIS
+# RISK REWARD SIMULATION
 # ============================================================
 
 
@@ -1004,98 +1337,73 @@ def generate_risk_reward(option):
 
 
 
-    return {
+    risk = profile.get(
+
+        "risk",
+
+        50
+
+    )
 
 
-        "risk":
 
-        profile["risk"],
+    reward = (
 
+        profile.get(
 
+            "growth",
 
-        "reward":
-
-        round(
-
-            (
-
-            profile["growth"]
-
-            +
-
-            profile["salary"]
-
-            )/2
+            50
 
         )
 
+        +
+
+        profile.get(
+
+            "salary",
+
+            50
+
+        )
+
+        +
+
+        profile.get(
+
+            "learning",
+
+            50
+
+        )
+
+    ) // 3
+
+
+
+
+    return {
+
+
+        "risk":risk,
+
+
+        "reward":reward,
+
+
+        "success_probability":
+
+        max(
+
+            40,
+
+            100-risk+reward//2
+
+        )
+
+
     }
 
-
-
-
-
-
-# ============================================================
-# FUTURE SIMULATION TIMELINE
-# ============================================================
-
-
-
-def generate_timeline(option):
-
-
-    text=normalize(option)
-
-
-
-    if "machine" in text:
-
-
-        return [
-
-            "0-6 months: Learn ML algorithms, Python and projects",
-
-            "6-18 months: Build AI applications",
-
-            "2-3 years: ML Engineer / AI Specialist",
-
-            "5 years: Senior AI Engineer / Research Engineer"
-
-        ]
-
-
-
-
-
-    if "data science" in text:
-
-
-        return [
-
-            "0-6 months: Statistics, SQL and analytics",
-
-            "6-18 months: Real-world data projects",
-
-            "2-3 years: Data Scientist role",
-
-            "5 years: Analytics Lead"
-
-        ]
-
-
-
-
-
-    return [
-
-        "Short term: Build skills",
-
-        "Medium term: Gain experience",
-
-        "Long term: Professional growth"
-
-    ]
 
 
 
@@ -1116,18 +1424,28 @@ def generate_future_path(option):
 
 
 
-    if "machine" in text:
+    if "machine" in text or "ml" in text:
 
 
         return [
 
+
             "AI Engineer",
 
-            "Deep Learning Engineer",
 
-            "Research Scientist"
+            "Machine Learning Engineer",
+
+
+            "Deep Learning Specialist",
+
+
+            "Research Engineer"
+
+
 
         ]
+
+
 
 
 
@@ -1136,53 +1454,88 @@ def generate_future_path(option):
 
         return [
 
+
+            "Data Analyst",
+
+
             "Data Scientist",
 
-            "ML Analyst",
+
+            "ML Data Scientist",
+
 
             "Analytics Lead"
 
+
+
         ]
 
 
 
-    if "dance" in text:
+
+
+
+    if "software" in text or "developer" in text:
 
 
         return [
 
-            "Performer",
 
-            "Choreographer",
+            "Software Developer",
 
-            "Creative Director"
+
+            "Backend Engineer",
+
+
+            "Senior Software Engineer",
+
+
+            "Engineering Lead"
+
 
         ]
 
 
 
-    if "sing" in text:
+
+
+
+    if "phd" in text or "research" in text:
 
 
         return [
 
-            "Singer",
 
-            "Composer",
+            "Research Student",
 
-            "Music Producer"
+
+            "Research Associate",
+
+
+            "Scientist",
+
+
+            "Research Leader"
+
 
         ]
+
+
+
 
 
 
     return [
 
+
+        "Foundation Building",
+
+
         "Skill Development",
 
-        "Experience",
 
-        "Career Growth"
+        "Professional Growth"
+
 
     ]
 
@@ -1191,108 +1544,105 @@ def generate_future_path(option):
 
 
 
+
+
+
+
 # ============================================================
-# VISUAL INTELLIGENCE ENGINE
+# TIMELINE SIMULATOR
 # ============================================================
 
 
 
-def generate_visual_context(domain):
+def generate_timeline(option):
 
 
-    main=domain[0]
-
-
-
-    visuals={
-
-
-        "technology":{
-
-            "image":
-            "https://images.unsplash.com/photo-1518770660439-4636190af475",
-
-            "title":
-            "Technology Intelligence",
-
-            "theme":
-            "AI, software and innovation"
-
-        },
+    text=normalize(option)
 
 
 
-        "career":{
-
-            "image":
-            "https://images.unsplash.com/photo-1521737604893-d14cc237f11d",
-
-            "title":
-            "Career Intelligence",
-
-            "theme":
-            "Opportunity and professional growth"
-
-        },
 
 
+    if "machine" in text or "ml" in text:
 
-        "creative":{
 
-            "image":
-            "https://images.unsplash.com/photo-1516280440614-37939bbacd81",
+        return [
 
-            "title":
-            "Creative Intelligence",
 
-            "theme":
-            "Passion and artistic growth"
+            "0-6 months: Learn ML algorithms, Python and mathematics",
 
-        },
+
+            "6-18 months: Build AI projects and practical systems",
+
+
+            "2-3 years: Become ML/AI Engineer",
+
+
+            "5+ years: Senior AI Engineer or Research Scientist"
 
 
 
-        "education":{
-
-            "image":
-            "https://images.unsplash.com/photo-1523050854058-8df90110c9f1",
-
-            "title":
-            "Education Intelligence",
-
-            "theme":
-            "Learning and research"
-
-        }
-
-    }
+        ]
 
 
 
-    return visuals.get(
 
-        main,
 
-        {
 
-        "image":
 
-        "https://images.unsplash.com/photo-1556761175-b413da4baf72",
+    if "data science" in text:
 
-        "title":
 
-        "AI Decision Intelligence",
+        return [
 
-        "theme":
 
-        "Multi-factor decision analysis"
+            "0-6 months: Statistics, SQL and analytics",
 
-        }
 
-    )
-    # ============================================================
-# FINAL DECISION GENERATOR
+            "6-18 months: Build data science portfolio",
+
+
+            "2-3 years: Data Scientist role",
+
+
+            "5+ years: Analytics Lead"
+
+
+
+        ]
+
+
+
+
+
+
+
+    return [
+
+
+        "Short term: Build skills",
+
+
+        "Medium term: Gain experience",
+
+
+        "Long term: Professional growth"
+
+
+    ]
+
+
+
+
+
+
+
+
+
 # ============================================================
+# FINAL DECISION ENGINE
+# ============================================================
+
 
 
 def generate_analysis(
@@ -1303,18 +1653,25 @@ def generate_analysis(
 ):
 
 
-    domain = detect_domain(
+    intelligence = understand_query(
+
         question
+
     )
 
 
-    goals = detect_goals(
-        question
-    )
+
+    goals=intelligence[
+
+        "goals"
+
+    ]
 
 
 
-    score_a, score_b = calculate_scores(
+
+
+    score_a,score_b = calculate_scores(
 
         option_a,
 
@@ -1326,13 +1683,19 @@ def generate_analysis(
 
 
 
+
+
+
     if score_a >= score_b:
+
 
         winner = option_a
 
         alternative = option_b
 
+
     else:
+
 
         winner = option_b
 
@@ -1341,12 +1704,17 @@ def generate_analysis(
 
 
 
+
     confidence = 70
+
+
 
 
     if evidence:
 
         confidence += 10
+
+
 
 
     if abs(score_a-score_b) >= 10:
@@ -1355,7 +1723,9 @@ def generate_analysis(
 
 
 
-    confidence = min(
+
+
+    confidence=min(
 
         confidence,
 
@@ -1366,59 +1736,54 @@ def generate_analysis(
 
 
 
+
+
     return {
 
 
-        # =====================================
-        # INTELLIGENCE SUMMARY
-        # =====================================
+        # ==========================
+        # INTELLIGENCE
+        # ==========================
 
 
         "decision_intelligence":{
 
 
-            "question":
-
-            question,
+            "question":question,
 
 
             "domain":
 
-            domain,
+            intelligence["domain"],
 
 
             "detected_goals":
 
             goals
 
+
         },
 
 
 
 
-
-        # =====================================
+        # ==========================
         # RECOMMENDATION
-        # =====================================
+        # ==========================
 
 
         "recommendation":{
 
 
-            "choice":
-
-            winner,
+            "choice":winner,
 
 
-            "confidence":
-
-            confidence,
+            "confidence":confidence,
 
 
             "reason":
 
-            f"{winner} better matches your goals: "
-            f"{', '.join(goals)}."
+            f"{winner} better matches your goals of {', '.join(goals)}."
 
         },
 
@@ -1426,25 +1791,30 @@ def generate_analysis(
 
 
 
-        # =====================================
-        # VISUALS
-        # =====================================
+
+        # ==========================
+        # SCORES
+        # ==========================
 
 
-        "visual_context":
-
-        generate_visual_context(
-
-            domain
-
-        ),
+        "scores":{
 
 
+            option_a:score_a,
 
 
-        # =====================================
-        # CHART DATA
-        # =====================================
+            option_b:score_b
+
+
+        },
+
+
+
+
+
+        # ==========================
+        # MATRIX
+        # ==========================
 
 
         "decision_matrix":
@@ -1461,50 +1831,21 @@ def generate_analysis(
 
 
 
-        "risk_reward":{
-
-
-            option_a:
-
-            generate_risk_reward(
-
-                option_a
-
-            ),
-
-
-
-            option_b:
-
-            generate_risk_reward(
-
-                option_b
-
-            )
-
-        },
-
-
-
-
-
-        # =====================================
-        # REASONING
-        # =====================================
+        # ==========================
+        # EXPLANATION
+        # ==========================
 
 
         "why":[
 
 
-            f"{winner} aligns better with your detected objectives.",
+            f"{winner} aligns better with your detected priorities.",
 
 
-            f"It provides stronger potential for "
-            f"{', '.join(goals)}.",
+            f"It provides stronger potential for {', '.join(goals)}.",
 
 
-            "The recommendation considers future value, "
-            "risk and opportunity."
+            "The recommendation considers future opportunities and trade-offs."
 
         ],
 
@@ -1518,13 +1859,13 @@ def generate_analysis(
             f"{alternative} is still a possible choice.",
 
 
-            "It may become stronger if your priorities change.",
+            "It may become better if your priorities change.",
 
 
-            "The current recommendation reflects your "
-            "present goals."
+            "Current recommendation is based on your present goals."
 
         ],
+
 
 
 
@@ -1544,13 +1885,14 @@ def generate_analysis(
 
 
 
+
         "disadvantages":[
 
 
-            f"{winner}: requires dedication and skill development.",
+            f"{winner}: requires commitment and continuous learning.",
 
 
-            f"{alternative}: may have different growth speed."
+            f"{alternative}: may have slower alignment with your goals."
 
         ],
 
@@ -1559,9 +1901,27 @@ def generate_analysis(
 
 
 
-        # =====================================
-        # FUTURE SIMULATION
-        # =====================================
+        # ==========================
+        # SIMULATION
+        # ==========================
+
+
+        "risk_reward":{
+
+
+            option_a:
+
+            generate_risk_reward(option_a),
+
+
+            option_b:
+
+            generate_risk_reward(option_b)
+
+
+        },
+
+
 
 
 
@@ -1570,21 +1930,13 @@ def generate_analysis(
 
             option_a:
 
-            generate_future_path(
-
-                option_a
-
-            ),
-
+            generate_future_path(option_a),
 
 
             option_b:
 
-            generate_future_path(
+            generate_future_path(option_b)
 
-                option_b
-
-            )
 
         },
 
@@ -1597,31 +1949,11 @@ def generate_analysis(
 
             winner:
 
-            generate_timeline(
+            generate_timeline(winner)
 
-                winner
-
-            )
 
         },
 
-
-
-
-
-        "scores":{
-
-
-            option_a:
-
-            score_a,
-
-
-            option_b:
-
-            score_b
-
-        },
 
 
 
@@ -1630,8 +1962,12 @@ def generate_analysis(
 
         len(evidence)
 
-    }
 
+    }
+    # ============================================================
+# PART 4/5
+# MAIN ANALYZER + API ROUTES
+# ============================================================
 
 
 
@@ -1639,7 +1975,7 @@ def generate_analysis(
 
 
 # ============================================================
-# MAIN ANALYSIS FUNCTION
+# MAIN DECISION ANALYZER
 # ============================================================
 
 
@@ -1665,6 +2001,7 @@ def analyze_decision(question):
 
             "Please provide two options. Example: Machine Learning vs Data Science"
 
+
         }
 
 
@@ -1676,6 +2013,8 @@ def analyze_decision(question):
         question
 
     )
+
+
 
 
 
@@ -1693,13 +2032,19 @@ def analyze_decision(question):
 
 
 
+
+
     result["options"]=[
+
 
         option_a,
 
+
         option_b
 
+
     ]
+
 
 
 
@@ -1716,9 +2061,11 @@ def analyze_decision(question):
 # ============================================================
 
 
+
 @app.route("/")
 
 def home():
+
 
     return send_from_directory(
 
@@ -1732,9 +2079,12 @@ def home():
 
 
 
+
+
 @app.route("/dashboard.html")
 
 def dashboard():
+
 
     return send_from_directory(
 
@@ -1748,9 +2098,12 @@ def dashboard():
 
 
 
+
+
 @app.route("/result.html")
 
-def result():
+def result_page():
+
 
     return send_from_directory(
 
@@ -1764,9 +2117,12 @@ def result():
 
 
 
+
+
 @app.route("/<path:file>")
 
 def frontend_files(file):
+
 
     return send_from_directory(
 
@@ -1781,8 +2137,11 @@ def frontend_files(file):
 
 
 
+
+
+
 # ============================================================
-# API
+# HEALTH CHECK
 # ============================================================
 
 
@@ -1807,15 +2166,25 @@ def health():
 
 
 
+
         "knowledge_records":
 
         len(KB)
+
 
     })
 
 
 
 
+
+
+
+
+
+# ============================================================
+# MAIN AI API
+# ============================================================
 
 
 
@@ -1833,11 +2202,14 @@ def analyze_api():
     try:
 
 
+
         data=request.get_json(
 
             silent=True
 
         ) or {}
+
+
 
 
 
@@ -1855,6 +2227,9 @@ def analyze_api():
 
 
 
+
+
+
         if len(question)<5:
 
 
@@ -1865,17 +2240,22 @@ def analyze_api():
 
                 "Please enter a decision"
 
+
             }),400
 
 
 
 
 
-        result=analyze_decision(
+
+
+        result = analyze_decision(
 
             question
 
         )
+
+
 
 
 
@@ -1889,7 +2269,20 @@ def analyze_api():
 
 
 
+
+
     except Exception as e:
+
+
+
+        print(
+
+            "ENGINE ERROR:",
+
+            e
+
+        )
+
 
 
         return jsonify({
@@ -1905,7 +2298,173 @@ def analyze_api():
 
             str(e)
 
+
+
         }),500
+        # ============================================================
+# PART 5/5
+# VISUAL INTELLIGENCE + SERVER START
+# ============================================================
+
+
+
+
+
+
+# ============================================================
+# VISUAL CONTEXT GENERATOR
+# ============================================================
+
+
+def generate_visual_context(domain):
+
+
+    visuals={
+
+
+        "technology":{
+
+
+            "image":
+
+            "https://images.unsplash.com/photo-1518770660439-4636190af475",
+
+
+            "theme":
+
+            "Artificial Intelligence & Technology",
+
+
+            "title":
+
+            "Technology Decision Intelligence"
+
+
+        },
+
+
+
+        "career":{
+
+
+            "image":
+
+            "https://images.unsplash.com/photo-1521737711867-e3b97375f902",
+
+
+            "theme":
+
+            "Career Growth Simulation",
+
+
+            "title":
+
+            "Professional Path Analysis"
+
+
+        },
+
+
+
+        "education":{
+
+
+            "image":
+
+            "https://images.unsplash.com/photo-1523240795612-9a054b0db644",
+
+
+            "theme":
+
+            "Learning & Research",
+
+
+            "title":
+
+            "Education Decision Analysis"
+
+
+        },
+
+
+
+        "finance":{
+
+
+            "image":
+
+            "https://images.unsplash.com/photo-1559526324-593bc073d938",
+
+
+            "theme":
+
+            "Financial Intelligence",
+
+
+            "title":
+
+            "Risk Reward Simulation"
+
+
+        },
+
+
+
+        "creative":{
+
+
+            "image":
+
+            "https://images.unsplash.com/photo-1513364776144-60967b0f800f",
+
+
+            "theme":
+
+            "Creative Intelligence",
+
+
+            "title":
+
+            "Passion Based Decision"
+
+
+        }
+
+
+    }
+
+
+
+
+
+    if domain in visuals:
+
+
+        return visuals[domain]
+
+
+
+    return {
+
+
+        "image":
+
+        "https://images.unsplash.com/photo-1551288049-bebda4e38f71",
+
+
+        "theme":
+
+        "AI Decision Intelligence",
+
+
+        "title":
+
+        "Universal Decision Analysis"
+
+
+    }
+
+
 
 
 
@@ -1914,7 +2473,112 @@ def analyze_api():
 
 
 # ============================================================
-# START SERVER
+# ADD VISUAL CONTEXT TO RESPONSE
+# ============================================================
+
+
+def attach_visuals(result):
+
+
+    try:
+
+
+        domain = result[
+
+            "decision_intelligence"
+
+        ][
+
+            "domain"
+
+        ][0]
+
+
+
+
+        result["visual_context"] = generate_visual_context(
+
+            domain
+
+        )
+
+
+
+    except Exception:
+
+
+
+        result["visual_context"]={
+
+
+            "title":
+
+            "Decision Intelligence",
+
+
+            "theme":
+
+            "AI Analysis"
+
+
+
+        }
+
+
+
+    return result
+
+
+
+
+
+
+
+# ============================================================
+# OVERRIDE ANALYSIS WITH VISUAL LAYER
+# ============================================================
+
+
+old_analyze_decision = analyze_decision
+
+
+
+def enhanced_analyze_decision(question):
+
+
+    result = old_analyze_decision(
+
+        question
+
+    )
+
+
+    if "error" not in result:
+
+
+        result = attach_visuals(
+
+            result
+
+        )
+
+
+
+    return result
+
+
+
+
+analyze_decision = enhanced_analyze_decision
+
+
+
+
+
+
+
+# ============================================================
+# APPLICATION START
 # ============================================================
 
 
@@ -1934,6 +2598,7 @@ if __name__=="__main__":
     )
 
 
+
     app.run(
 
         host="0.0.0.0",
@@ -1943,4 +2608,3 @@ if __name__=="__main__":
         debug=False
 
     )
-    
