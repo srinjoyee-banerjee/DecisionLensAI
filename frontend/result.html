@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
@@ -6,11 +7,20 @@
 <meta charset="UTF-8">
 
 <meta name="viewport"
-content="width=device-width,initial-scale=1.0">
+content="width=device-width, initial-scale=1.0">
 
-<title>DecisionLens AI Report</title>
 
-<link rel="stylesheet" href="style.css">
+<title>
+DecisionLens AI Report
+</title>
+
+
+<link rel="stylesheet"
+href="style.css">
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 
 </head>
 
@@ -20,14 +30,20 @@ content="width=device-width,initial-scale=1.0">
 
 <nav>
 
+
 <div class="logo">
+
 DECISION<span>LENS</span>
+
 </div>
 
 
 <div class="nav-links">
 
-<a href="/">HOME</a>
+<a href="/">
+HOME
+</a>
+
 
 <a href="/dashboard.html">
 WORKSPACE
@@ -35,39 +51,65 @@ WORKSPACE
 
 </div>
 
+
 </nav>
 
 
 
 
-<main class="report">
+
+<main class="dashboard">
+
 
 
 <h1>
-DECISIONLENS / AI DECISION REPORT
+DECISIONLENS / INTELLIGENCE REPORT
 </h1>
 
 
 
+
+<!-- SUMMARY -->
 
 
 <section class="card">
 
 
 <h2>
-Decision Intelligence
+AI UNDERSTANDING
 </h2>
 
 
-<p id="question">
-Loading decision...
-</p>
+<div id="intelligence">
 
+</div>
+
+
+</section>
+
+
+
+
+
+<!-- RECOMMENDATION -->
+
+
+<section class="card recommendation">
+
+
+<h2>
+PRIMARY DECISION PATH
+</h2>
+
+
+<h1 id="choice">
+--
+</h1>
 
 
 <div class="confidence">
 
-AI CONFIDENCE
+CONFIDENCE
 
 <span id="confidence">
 --
@@ -77,31 +119,8 @@ AI CONFIDENCE
 </div>
 
 
-</section>
+<p id="reason">
 
-
-
-
-
-
-
-<section class="card recommendation">
-
-
-<h2>
-PRIMARY RECOMMENDATION
-</h2>
-
-
-
-<h1 id="recommendation">
---
-</h1>
-
-
-
-<p id="finalAdvice">
---
 </p>
 
 
@@ -114,19 +133,118 @@ PRIMARY RECOMMENDATION
 
 
 
+<!-- MATRIX -->
+
+
 <section class="card">
+
+
+<h2>
+DECISION MATRIX
+</h2>
+
+
+<canvas id="matrixChart">
+
+</canvas>
+
+
+</section>
+
+
+
+
+
+
+<!-- RISK -->
+
+
+<section class="card">
+
+
+<h2>
+RISK VS REWARD SIMULATION
+</h2>
+
+
+<canvas id="riskChart">
+
+</canvas>
+
+
+</section>
+
+
+
+
+
+
+
+<!-- FUTURE -->
+
+
+<section class="card">
+
+
+<h2>
+FUTURE TIMELINE
+</h2>
+
+
+<div id="timeline">
+
+</div>
+
+
+</section>
+
+
+
+
+
+
+
+<!-- PATHS -->
+
+
+<section class="card">
+
+
+<h2>
+ALTERNATIVE FUTURES
+</h2>
+
+
+
+<div id="futurePaths">
+
+</div>
+
+
+
+</section>
+
+
+
+
+
+
+
+
+<section class="card">
+
 
 <h2>
 WHY THIS CHOICE
 </h2>
 
 
-<ul id="why"></ul>
+<ul id="why">
+
+</ul>
 
 
 </section>
-
-
 
 
 
@@ -136,73 +254,16 @@ WHY THIS CHOICE
 
 
 <h2>
-WHY NOT THE ALTERNATIVE
+TRADE OFFS
 </h2>
 
 
-<ul id="whyNot"></ul>
+<ul id="tradeoffs">
+
+</ul>
 
 
 </section>
-
-
-
-
-
-
-
-<section class="card">
-
-
-<h2>
-ADVANTAGES
-</h2>
-
-
-<ul id="advantages"></ul>
-
-
-</section>
-
-
-
-
-
-
-
-<section class="card">
-
-
-<h2>
-DISADVANTAGES
-</h2>
-
-
-<ul id="disadvantages"></ul>
-
-
-</section>
-
-
-
-
-
-
-
-<section class="card">
-
-
-<h2>
-TRADE-OFFS
-</h2>
-
-
-<ul id="tradeoffs"></ul>
-
-
-</section>
-
-
 
 
 
@@ -213,12 +274,10 @@ TRADE-OFFS
 
 
 
+
+
+
 <script>
-
-
-// ============================================================
-// LOAD DECISION REPORT
-// ============================================================
 
 
 const result =
@@ -233,24 +292,57 @@ localStorage.getItem(
 
 
 
-
-
 if(result){
 
 
 
+// ======================
+// INTELLIGENCE
+// ======================
+
+
 document.getElementById(
-"question"
+"intelligence"
+).innerHTML = `
+
+
+<p>
+<b>Domain:</b>
+${result.decision_intelligence.domain}
+</p>
+
+
+<p>
+<b>Goals:</b>
+${result.decision_intelligence.detected_goals.join(", ")}
+</p>
+
+
+<p>
+<b>Query:</b>
+${result.decision_intelligence.question}
+</p>
+
+
+`;
+
+
+
+
+
+
+
+// ======================
+// RECOMMENDATION
+// ======================
+
+
+
+document.getElementById(
+"choice"
 ).innerHTML =
 
-
-result.decision_intelligence ||
-
-result.decision ||
-
-"Decision Analysis";
-
-
+result.recommendation.choice;
 
 
 
@@ -258,75 +350,316 @@ document.getElementById(
 "confidence"
 ).innerHTML =
 
-
-(result.confidence || 0)
+result.recommendation.confidence
 +
 "%";
 
 
 
-
-
-
-
 document.getElementById(
-"recommendation"
+"reason"
 ).innerHTML =
 
-
-result.recommendation ||
-
-"--";
+result.recommendation.reason;
 
 
 
 
 
 
+
+
+// ======================
+// MATRIX CHART
+// ======================
+
+
+
+let matrix =
+result.decision_matrix;
+
+
+
+new Chart(
 
 document.getElementById(
-"finalAdvice"
-).innerHTML =
+"matrixChart"
+),
+
+{
+
+type:"radar",
+
+data:{
 
 
-result.primary_reason ||
-
-result.final_advice ||
-
-"";
+labels:
+matrix.factors,
 
 
+datasets:[
+
+{
+
+label:
+result.options[0],
+
+data:
+matrix[result.options[0]]
+
+},
+
+
+{
+
+label:
+result.options[1],
+
+data:
+matrix[result.options[1]]
+
+}
+
+]
+
+},
+
+
+options:{
+
+
+responsive:true
+
+}
+
+}
+
+
+);
 
 
 
 
+
+
+
+
+// ======================
+// RISK CHART
+// ======================
+
+
+
+let rr =
+result.risk_reward;
+
+
+
+new Chart(
+
+document.getElementById(
+"riskChart"
+),
+
+{
+
+type:"bar",
+
+data:{
+
+
+labels:
+
+result.options,
+
+
+datasets:[
+
+{
+
+label:
+"Risk",
+
+data:[
+
+rr[result.options[0]].risk,
+
+rr[result.options[1]].risk
+
+]
+
+},
+
+
+{
+
+label:
+"Reward",
+
+data:[
+
+rr[result.options[0]].reward,
+
+rr[result.options[1]].reward
+
+]
+
+}
+
+
+]
+
+},
+
+
+options:{
+
+
+responsive:true
+
+
+}
+
+
+}
+
+
+);
+
+
+
+
+
+
+
+
+
+
+// ======================
+// TIMELINE
+// ======================
+
+
+let timeline =
+result.timeline[
+result.recommendation.choice
+];
+
+
+
+let timelineBox =
+document.getElementById(
+"timeline"
+);
+
+
+
+timeline.forEach(t=>{
+
+
+let div =
+document.createElement(
+"div"
+);
+
+
+div.className =
+"timeline-item";
+
+
+div.innerHTML=t;
+
+
+timelineBox.appendChild(div);
+
+
+
+});
+
+
+
+
+
+
+
+
+
+// ======================
+// FUTURE PATHS
+// ======================
+
+
+let paths =
+result.future_paths;
+
+
+
+let pathBox =
+document.getElementById(
+"futurePaths"
+);
+
+
+
+Object.keys(paths).forEach(
+key=>{
+
+
+let div =
+document.createElement(
+"div"
+);
+
+
+div.className =
+"future-card";
+
+
+div.innerHTML=
+
+`
+
+<h3>
+${key}
+</h3>
+
+<p>
+${paths[key]}
+</p>
+
+`;
+
+
+
+pathBox.appendChild(div);
+
+
+
+});
+
+
+
+
+
+
+
+
+// ======================
+// LISTS
+// ======================
 
 
 function fill(id,data){
 
 
-
-const box =
+let box =
 document.getElementById(id);
 
 
-
-box.innerHTML="";
-
+data.forEach(item=>{
 
 
-if(
-Array.isArray(data)
-&&
-data.length>0
-){
-
-
-data.forEach(
-item=>{
-
-
-const li =
+let li =
 document.createElement(
 "li"
 );
@@ -338,27 +671,10 @@ li.innerHTML=item;
 box.appendChild(li);
 
 
-}
-
-);
+});
 
 
 }
-
-else{
-
-
-box.innerHTML =
-"<li>No information available</li>";
-
-}
-
-
-
-}
-
-
-
 
 
 
@@ -370,69 +686,43 @@ result.why
 
 
 fill(
-"whyNot",
-result.why_not
-);
-
-
-
-fill(
-"advantages",
-result.advantages
-);
-
-
-
-fill(
-"disadvantages",
-result.disadvantages
-);
-
-
-
-fill(
 "tradeoffs",
-result.tradeoffs
+[
+
+"Short term benefit vs long term value",
+
+"Risk vs reward",
+
+"Specialization vs flexibility"
+
+]
+
 );
-
-
-
 
 
 
 }
 
+
+
 else{
 
 
-document.querySelector(
-".report"
-).innerHTML =
+document.body.innerHTML=
 
 `
 
-<section class="card">
-
 <h2>
-No decision data found
+No Decision Data Found
 </h2>
 
-<p>
-Please return to workspace and analyze a decision.
-</p>
-
-</section>
-
 `;
-
-
 
 }
 
 
 
 </script>
-
 
 
 
