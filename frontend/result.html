@@ -1,308 +1,306 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Decision Report | DecisionLens AI</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 
-    <link rel="stylesheet" href="style.css">
+<title>DecisionLens AI Report</title>
+
+<link rel="stylesheet" href="style.css">
+
 </head>
+
 
 <body>
 
-<nav class="navbar">
 
-    <div class="brand">
-        DECISION<span>LENS</span>
-    </div>
+<nav>
 
-    <div class="navlinks">
-        <a href="/">HOME</a>
-        <a href="dashboard.html">WORKSPACE</a>
-        <a class="active" href="result.html">RESULTS</a>
-    </div>
+<div class="logo">
+DECISION<span>LENS</span>
+</div>
+
+
+<div class="nav-links">
+
+<a href="/">HOME</a>
+<a href="/dashboard.html">WORKSPACE</a>
+
+</div>
 
 </nav>
 
 
-<main class="results">
 
-    <!-- HEADER -->
+<main class="report">
 
-    <section class="report-header">
 
-        <div class="report-title">
+<h1>
+DECISIONLENS / AI DECISION REPORT
+</h1>
 
-            <div class="eyebrow">
-                DECISIONLENS / AI DECISION REPORT
-            </div>
 
-            <h1>
-                Decision<br>
-                <span>Intelligence</span>
-            </h1>
+<section class="card">
 
-            <p id="decisionText">
-                Loading your decision analysis...
-            </p>
+<h2>
+Decision Intelligence
+</h2>
 
-        </div>
 
+<p id="question"></p>
 
-        <div class="confidence-box">
 
-            <span>AI CONFIDENCE</span>
+<div class="confidence">
 
-            <strong id="confidence">
-                —
-            </strong>
+AI CONFIDENCE
 
-            <small>
-                ANALYSIS RELIABILITY
-            </small>
+<span id="confidence">
+--
+</span>
 
-        </div>
+</div>
 
-    </section>
 
+</section>
 
-    <!-- RECOMMENDATION -->
 
-    <section class="recommendation">
 
-        <div class="recommendation-top">
 
-            <div class="section-label">
-                PRIMARY RECOMMENDATION
-            </div>
 
-            <div class="live-indicator">
-                <span></span>
-                AI ENGINE ONLINE
-            </div>
+<section class="card recommendation">
 
-        </div>
 
+<h2>
+PRIMARY RECOMMENDATION
+</h2>
 
-        <h2 id="recommendation">
-            Analyzing decision...
-        </h2>
 
+<h1 id="recommendation">
+--
+</h1>
 
-        <p id="summary">
-            Generating your decision intelligence report.
-        </p>
 
-    </section>
+<p id="finalAdvice"></p>
 
 
-    <!-- ANALYSIS GRID -->
+</section>
 
-    <section class="result-grid">
 
 
-        <!-- FACTORS -->
 
-        <article class="result-card">
 
-            <div class="card-heading">
+<section class="card">
 
-                <div class="result-number blue">
-                    01
-                </div>
 
-                <div>
-                    <div class="card-label">
-                        DECISION ANALYSIS
-                    </div>
+<h2>
+WHY THIS CHOICE
+</h2>
 
-                    <h3>
-                        KEY FACTORS
-                    </h3>
-                </div>
 
-            </div>
+<ul id="why"></ul>
 
-            <ul id="factors">
-                <li>Loading...</li>
-            </ul>
 
-        </article>
+</section>
 
 
-        <!-- RISKS -->
 
-        <article class="result-card risk-card">
 
-            <div class="card-heading">
 
-                <div class="result-number red">
-                    02
-                </div>
+<section class="card">
 
-                <div>
-                    <div class="card-label red-label">
-                        CAUTION
-                    </div>
 
-                    <h3>
-                        RISKS
-                    </h3>
-                </div>
+<h2>
+WHY NOT THE ALTERNATIVE
+</h2>
 
-            </div>
 
-            <ul id="risks">
-                <li>Loading...</li>
-            </ul>
+<ul id="whyNot"></ul>
 
-        </article>
 
+</section>
 
-        <!-- OPPORTUNITIES -->
 
-        <article class="result-card">
 
-            <div class="card-heading">
 
-                <div class="result-number blue">
-                    03
-                </div>
 
-                <div>
-                    <div class="card-label">
-                        UPSIDE
-                    </div>
+<section class="card">
 
-                    <h3>
-                        OPPORTUNITIES
-                    </h3>
 
-                </div>
+<h2>
+ADVANTAGES
+</h2>
 
-            </div>
 
-            <ul id="opportunities">
-                <li>Loading...</li>
-            </ul>
+<ul id="advantages"></ul>
 
-        </article>
 
+</section>
 
-        <!-- TRADEOFFS -->
 
-        <article class="result-card risk-card">
 
-            <div class="card-heading">
 
-                <div class="result-number red">
-                    04
-                </div>
 
-                <div>
-                    <div class="card-label red-label">
-                        BALANCE
-                    </div>
+<section class="card">
 
-                    <h3>
-                        TRADE-OFFS
-                    </h3>
 
-                </div>
+<h2>
+DISADVANTAGES
+</h2>
 
-            </div>
 
-            <ul id="tradeoffs">
-                <li>Loading...</li>
-            </ul>
+<ul id="disadvantages"></ul>
 
-        </article>
 
-    </section>
+</section>
 
 
-    <!-- RETRIEVED EVIDENCE -->
 
-    <section class="evidence">
 
-        <div class="evidence-header">
 
-            <div>
+<section class="card">
 
-                <div class="section-label">
-                    RAG INTELLIGENCE LAYER
-                </div>
 
-                <h2>
-                    Retrieved Evidence
-                </h2>
+<h2>
+TRADE-OFFS
+</h2>
 
-            </div>
 
-            <div class="evidence-status">
-                KNOWLEDGE BASE
-            </div>
+<ul id="tradeoffs"></ul>
 
-        </div>
 
+</section>
 
-        <div id="evidenceList">
 
-            <div class="evidence-item">
-                <strong>Retrieving intelligence...</strong>
-                <p>
-                    Searching the DecisionLens knowledge base.
-                </p>
-            </div>
-
-        </div>
-
-    </section>
-
-
-    <!-- ACTIONS -->
-
-    <div class="bottom-actions">
-
-        <a
-            href="dashboard.html"
-            class="primary-btn"
-        >
-            ← NEW DECISION
-        </a>
-
-
-        <a
-            href="/"
-            class="secondary-btn"
-        >
-            HOME
-        </a>
-
-    </div>
 
 </main>
 
 
-<footer>
 
-    <strong>
-        DECISIONLENS AI
-    </strong>
-
-    <span>•</span>
-
-    RAG-POWERED DECISION SUPPORT
-
-    <span>•</span>
-
-    DECISION INTELLIGENCE ENGINE
-
-</footer>
+<script>
 
 
-<script src="script.js"></script>
+const result =
+JSON.parse(
+localStorage.getItem(
+"decisionResult"
+)
+);
+
+
+
+if(result){
+
+
+document.getElementById(
+"question"
+).innerHTML =
+result.question;
+
+
+
+document.getElementById(
+"confidence"
+).innerHTML =
+result.confidence+"%";
+
+
+
+document.getElementById(
+"recommendation"
+).innerHTML =
+result.recommendation;
+
+
+
+document.getElementById(
+"finalAdvice"
+).innerHTML =
+result.final_advice;
+
+
+
+function fill(id,data){
+
+
+let box=document.getElementById(id);
+
+
+if(data && data.length){
+
+
+data.forEach(item=>{
+
+
+let li=document.createElement(
+"li"
+);
+
+
+li.innerHTML=item;
+
+
+box.appendChild(li);
+
+
+});
+
+
+}
+
+}
+
+
+
+fill(
+"why",
+result.why
+);
+
+
+fill(
+"whyNot",
+result.why_not
+);
+
+
+fill(
+"advantages",
+result.advantages
+);
+
+
+fill(
+"disadvantages",
+result.disadvantages
+);
+
+
+fill(
+"tradeoffs",
+result.tradeoffs
+);
+
+
+
+}
+
+else{
+
+
+document.querySelector(
+".report"
+).innerHTML =
+"<h2>No decision data found</h2>";
+
+
+}
+
+
+</script>
+
 
 </body>
+
 </html>
