@@ -1,0 +1,27 @@
+[
+  {
+    "category": "technology",
+    "title": "Technology Selection",
+    "text": "Technology choices should consider requirements, scalability,\nperformance, reliability, security, development speed, ecosystem,\navailable expertise, maintenance cost and integration complexity.\nThe newest technology is not automatically the best choice."
+  },
+  {
+    "category": "technology",
+    "title": "Build Versus Buy",
+    "text": "Build-versus-buy decisions should compare development cost,\ntime to deployment, customization requirements, vendor dependency,\nmaintenance, security and long-term total cost of ownership.\nBuying can reduce implementation time, while building can provide\ngreater control when requirements are highly specialized."
+  },
+  {
+    "category": "career",
+    "title": "Skill Investment",
+    "text": "When choosing what skill to learn, consider relevance to\nthe target role, current proficiency, learning difficulty,\npractical application, transferability and expected demand.\nProjects that demonstrate the skill can increase the value\nof learning compared with theoretical study alone."
+  },
+  {
+    "category": "business",
+    "title": "Business Strategy",
+    "text": "Business decisions should consider customer value,\ncompetitive advantage, market demand, operational feasibility,\nfinancial impact, scalability and execution risk."
+  },
+  {
+    "category": "finance",
+    "title": "Cost Benefit Analysis",
+    "text": "Cost-benefit analysis compares the total costs of an action\nagainst its expected benefits. Costs and benefits should be\nconsidered together with assumptions, uncertainty, time horizon\nand opportunity cost."
+  }
+]
