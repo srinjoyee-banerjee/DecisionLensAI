@@ -1,22 +1,16 @@
 <!DOCTYPE html>
-
 <html lang="en">
 
 <head>
 
 <meta charset="UTF-8">
 
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<title>DecisionLens AI Report</title>
 
 
-<title>
-DecisionLens AI Report
-</title>
-
-
-<link rel="stylesheet"
-href="style.css">
+<link rel="stylesheet" href="style.css">
 
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -30,24 +24,16 @@ href="style.css">
 
 <nav>
 
-
 <div class="logo">
-
 DECISION<span>LENS</span>
-
 </div>
 
 
 <div class="nav-links">
 
-<a href="/">
-HOME
-</a>
+<a href="/">HOME</a>
 
-
-<a href="/dashboard.html">
-WORKSPACE
-</a>
+<a href="/dashboard.html">WORKSPACE</a>
 
 </div>
 
@@ -58,29 +44,64 @@ WORKSPACE
 
 
 
-<main class="dashboard">
-
+<main class="report">
 
 
 <h1>
-DECISIONLENS / INTELLIGENCE REPORT
+DECISIONLENS / AI DECISION REPORT
 </h1>
 
 
 
 
-<!-- SUMMARY -->
+<!-- ================================
+INTELLIGENCE SUMMARY
+================================ -->
 
 
 <section class="card">
 
 
 <h2>
-AI UNDERSTANDING
+Decision Intelligence
 </h2>
 
 
-<div id="intelligence">
+<p id="question">
+Loading decision...
+</p>
+
+
+
+<div class="info-grid">
+
+
+<div>
+
+<h3>
+Domain
+</h3>
+
+<p id="domain">
+--
+</p>
+
+</div>
+
+
+
+<div>
+
+<h3>
+Detected Goals
+</h3>
+
+<p id="goals">
+--
+</p>
+
+</div>
+
 
 </div>
 
@@ -91,25 +112,81 @@ AI UNDERSTANDING
 
 
 
-<!-- RECOMMENDATION -->
+
+<!-- ================================
+VISUAL INTELLIGENCE
+================================ -->
+
+
+<section class="card visual-card">
+
+
+<div>
+
+
+<img 
+id="domainImage"
+src=""
+alt="Decision Intelligence">
+
+
+</div>
+
+
+
+<div>
+
+
+<h2 id="visualTitle">
+AI Intelligence
+</h2>
+
+
+<p id="visualTheme">
+</p>
+
+
+
+</div>
+
+
+</section>
+
+
+
+
+
+
+<!-- ================================
+RECOMMENDATION
+================================ -->
 
 
 <section class="card recommendation">
 
 
 <h2>
-PRIMARY DECISION PATH
+PRIMARY RECOMMENDATION
 </h2>
 
 
-<h1 id="choice">
+
+<h1 id="recommendation">
 --
 </h1>
 
 
+
+<p id="reason">
+</p>
+
+
+
+
 <div class="confidence">
 
-CONFIDENCE
+
+AI CONFIDENCE
 
 <span id="confidence">
 --
@@ -119,11 +196,6 @@ CONFIDENCE
 </div>
 
 
-<p id="reason">
-
-</p>
-
-
 
 </section>
 
@@ -133,65 +205,23 @@ CONFIDENCE
 
 
 
-<!-- MATRIX -->
+
+<!-- ================================
+SCORE CARDS
+================================ -->
 
 
 <section class="card">
 
 
 <h2>
-DECISION MATRIX
+Decision Scores
 </h2>
 
 
-<canvas id="matrixChart">
+<div id="scores"
+class="score-grid">
 
-</canvas>
-
-
-</section>
-
-
-
-
-
-
-<!-- RISK -->
-
-
-<section class="card">
-
-
-<h2>
-RISK VS REWARD SIMULATION
-</h2>
-
-
-<canvas id="riskChart">
-
-</canvas>
-
-
-</section>
-
-
-
-
-
-
-
-<!-- FUTURE -->
-
-
-<section class="card">
-
-
-<h2>
-FUTURE TIMELINE
-</h2>
-
-
-<div id="timeline">
 
 </div>
 
@@ -204,22 +234,26 @@ FUTURE TIMELINE
 
 
 
-<!-- PATHS -->
+<!-- ================================
+RADAR CHART
+================================ -->
 
 
 <section class="card">
 
 
 <h2>
-ALTERNATIVE FUTURES
+Decision Matrix Analysis
 </h2>
 
 
+<div class="chart-box">
 
-<div id="futurePaths">
+
+<canvas id="radarChart"></canvas>
+
 
 </div>
-
 
 
 </section>
@@ -229,6 +263,40 @@ ALTERNATIVE FUTURES
 
 
 
+<!-- ================================
+RISK REWARD
+================================ -->
+
+
+<section class="card">
+
+
+<h2>
+Risk vs Reward Simulation
+</h2>
+
+
+
+<div class="chart-box">
+
+
+<canvas id="riskChart"></canvas>
+
+
+</div>
+
+
+</section>
+
+
+
+
+
+
+
+<!-- ================================
+REASONING
+================================ -->
 
 
 <section class="card">
@@ -239,9 +307,7 @@ WHY THIS CHOICE
 </h2>
 
 
-<ul id="why">
-
-</ul>
+<ul id="why"></ul>
 
 
 </section>
@@ -254,16 +320,102 @@ WHY THIS CHOICE
 
 
 <h2>
-TRADE OFFS
+WHY NOT THE ALTERNATIVE
 </h2>
 
 
-<ul id="tradeoffs">
-
-</ul>
+<ul id="whyNot"></ul>
 
 
 </section>
+
+
+
+
+
+
+<section class="card">
+
+
+<h2>
+ADVANTAGES
+</h2>
+
+
+<ul id="advantages"></ul>
+
+
+</section>
+
+
+
+
+
+<section class="card">
+
+
+<h2>
+DISADVANTAGES
+</h2>
+
+
+<ul id="disadvantages"></ul>
+
+
+</section>
+
+
+
+
+
+
+
+<!-- ================================
+FUTURE SIMULATION
+================================ -->
+
+
+<section class="card">
+
+
+<h2>
+Future Path Simulation
+</h2>
+
+
+<div id="futurePath">
+
+</div>
+
+
+</section>
+
+
+
+
+
+
+
+
+<section class="card">
+
+
+<h2>
+Timeline Projection
+</h2>
+
+
+<div id="timeline"
+class="timeline">
+
+
+</div>
+
+
+</section>
+
+
+
 
 
 
@@ -273,365 +425,176 @@ TRADE OFFS
 
 
 
+<script src="script.js"></script>
+
+
+</body>
+
+</html>
+// ============================================================
+// DECISIONLENS AI
+// ADVANCED DECISION REPORT ENGINE
+// FRONTEND LOGIC
+// ============================================================
 
 
 
-
-<script>
-
-
-const result =
-JSON.parse(
-
-localStorage.getItem(
-"decisionResult"
-)
-
+const result = JSON.parse(
+    localStorage.getItem("decisionResult")
 );
 
 
 
-
-if(result){
-
+if(!result){
 
 
-// ======================
-// INTELLIGENCE
-// ======================
+    document.body.innerHTML = `
+
+    <h1 style="color:white;text-align:center;margin-top:100px">
+
+    No decision data found
+
+    </h1>
+
+    `;
 
 
-document.getElementById(
-"intelligence"
-).innerHTML = `
+}
+
+else{
 
 
-<p>
-<b>Domain:</b>
-${result.decision_intelligence.domain}
-</p>
+
+// ============================================================
+// BASIC INFORMATION
+// ============================================================
 
 
-<p>
-<b>Goals:</b>
-${result.decision_intelligence.detected_goals.join(", ")}
-</p>
+
+document.getElementById("question").innerHTML =
+result.decision_intelligence.question;
 
 
-<p>
-<b>Query:</b>
-${result.decision_intelligence.question}
-</p>
 
-
-`;
-
+document.getElementById("domain").innerHTML =
+result.decision_intelligence.domain.join(", ");
 
 
 
 
+document.getElementById("goals").innerHTML =
+result.decision_intelligence.detected_goals.join(", ");
 
 
-// ======================
+
+
+
+// ============================================================
+// VISUAL INTELLIGENCE IMAGE
+// ============================================================
+
+
+
+if(result.visual_context){
+
+
+document.getElementById("domainImage").src =
+result.visual_context.image;
+
+
+
+document.getElementById("visualTitle").innerHTML =
+result.visual_context.title;
+
+
+
+document.getElementById("visualTheme").innerHTML =
+result.visual_context.theme;
+
+
+
+}
+
+
+
+
+
+
+// ============================================================
 // RECOMMENDATION
-// ======================
+// ============================================================
 
 
 
-document.getElementById(
-"choice"
-).innerHTML =
-
+document.getElementById("recommendation").innerHTML =
 result.recommendation.choice;
 
 
 
-document.getElementById(
-"confidence"
-).innerHTML =
-
-result.recommendation.confidence
-+
-"%";
-
-
-
-document.getElementById(
-"reason"
-).innerHTML =
-
+document.getElementById("reason").innerHTML =
 result.recommendation.reason;
 
 
 
+document.getElementById("confidence").innerHTML =
+result.recommendation.confidence + "%";
 
 
 
 
 
-// ======================
-// MATRIX CHART
-// ======================
 
 
 
-let matrix =
-result.decision_matrix;
+// ============================================================
+// SCORE CARDS
+// ============================================================
 
 
 
-new Chart(
+const scoreBox =
+document.getElementById("scores");
 
-document.getElementById(
-"matrixChart"
-),
 
-{
 
-type:"radar",
+Object.entries(result.scores)
+.forEach(([name,score])=>{
 
-data:{
 
+let card=document.createElement("div");
 
-labels:
-matrix.factors,
 
+card.className="score-card";
 
-datasets:[
 
-{
 
-label:
-result.options[0],
-
-data:
-matrix[result.options[0]]
-
-},
-
-
-{
-
-label:
-result.options[1],
-
-data:
-matrix[result.options[1]]
-
-}
-
-]
-
-},
-
-
-options:{
-
-
-responsive:true
-
-}
-
-}
-
-
-);
-
-
-
-
-
-
-
-
-// ======================
-// RISK CHART
-// ======================
-
-
-
-let rr =
-result.risk_reward;
-
-
-
-new Chart(
-
-document.getElementById(
-"riskChart"
-),
-
-{
-
-type:"bar",
-
-data:{
-
-
-labels:
-
-result.options,
-
-
-datasets:[
-
-{
-
-label:
-"Risk",
-
-data:[
-
-rr[result.options[0]].risk,
-
-rr[result.options[1]].risk
-
-]
-
-},
-
-
-{
-
-label:
-"Reward",
-
-data:[
-
-rr[result.options[0]].reward,
-
-rr[result.options[1]].reward
-
-]
-
-}
-
-
-]
-
-},
-
-
-options:{
-
-
-responsive:true
-
-
-}
-
-
-}
-
-
-);
-
-
-
-
-
-
-
-
-
-
-// ======================
-// TIMELINE
-// ======================
-
-
-let timeline =
-result.timeline[
-result.recommendation.choice
-];
-
-
-
-let timelineBox =
-document.getElementById(
-"timeline"
-);
-
-
-
-timeline.forEach(t=>{
-
-
-let div =
-document.createElement(
-"div"
-);
-
-
-div.className =
-"timeline-item";
-
-
-div.innerHTML=t;
-
-
-timelineBox.appendChild(div);
-
-
-
-});
-
-
-
-
-
-
-
-
-
-// ======================
-// FUTURE PATHS
-// ======================
-
-
-let paths =
-result.future_paths;
-
-
-
-let pathBox =
-document.getElementById(
-"futurePaths"
-);
-
-
-
-Object.keys(paths).forEach(
-key=>{
-
-
-let div =
-document.createElement(
-"div"
-);
-
-
-div.className =
-"future-card";
-
-
-div.innerHTML=
-
-`
+card.innerHTML=`
 
 <h3>
-${key}
+
+${name}
+
 </h3>
 
+
+<div class="score-number">
+
+${score}
+
+</div>
+
+
 <p>
-${paths[key]}
+
+AI Compatibility Score
+
 </p>
 
 `;
 
 
 
-pathBox.appendChild(div);
+scoreBox.appendChild(card);
 
 
 
@@ -643,26 +606,30 @@ pathBox.appendChild(div);
 
 
 
-
-// ======================
-// LISTS
-// ======================
-
-
-function fill(id,data){
+// ============================================================
+// LIST GENERATOR
+// ============================================================
 
 
-let box =
-document.getElementById(id);
+
+function fillList(id,data){
+
+
+const box=document.getElementById(id);
+
+
+
+box.innerHTML="";
+
+
+
+if(data){
 
 
 data.forEach(item=>{
 
 
-let li =
-document.createElement(
-"li"
-);
+let li=document.createElement("li");
 
 
 li.innerHTML=item;
@@ -671,6 +638,7 @@ li.innerHTML=item;
 box.appendChild(li);
 
 
+
 });
 
 
@@ -678,24 +646,157 @@ box.appendChild(li);
 
 
 
-fill(
+}
+
+
+
+
+
+fillList(
 "why",
 result.why
 );
 
 
 
-fill(
-"tradeoffs",
-[
+fillList(
+"whyNot",
+result.why_not
+);
 
-"Short term benefit vs long term value",
 
-"Risk vs reward",
 
-"Specialization vs flexibility"
+fillList(
+"advantages",
+result.advantages
+);
+
+
+
+fillList(
+"disadvantages",
+result.disadvantages
+);
+
+
+
+
+
+
+
+
+
+// ============================================================
+// RADAR CHART
+// ============================================================
+
+
+
+const matrix =
+result.decision_matrix;
+
+
+
+if(matrix){
+
+
+
+new Chart(
+
+document.getElementById(
+"radarChart"
+),
+
+{
+
+
+type:"radar",
+
+
+
+data:{
+
+
+labels:
+matrix.labels,
+
+
+
+datasets:[
+
+
+{
+
+
+label:
+result.options[0],
+
+
+data:
+matrix[result.options[0]],
+
+
+
+borderWidth:2
+
+
+},
+
+
+
+{
+
+
+label:
+result.options[1],
+
+
+data:
+matrix[result.options[1]],
+
+
+
+borderWidth:2
+
+
+}
+
 
 ]
+
+},
+
+
+
+options:{
+
+
+responsive:true,
+
+
+scales:{
+
+
+r:{
+
+
+beginAtZero:true,
+
+
+max:100
+
+
+}
+
+
+}
+
+
+}
+
+
+
+}
 
 );
 
@@ -705,27 +806,243 @@ fill(
 
 
 
-else{
 
 
-document.body.innerHTML=
 
-`
 
-<h2>
-No Decision Data Found
-</h2>
+// ============================================================
+// RISK REWARD CHART
+// ============================================================
 
-`;
+
+
+
+const risk =
+result.risk_reward;
+
+
+
+if(risk){
+
+
+
+let names =
+Object.keys(risk);
+
+
+
+new Chart(
+
+
+document.getElementById(
+"riskChart"
+),
+
+
+
+{
+
+
+type:"bar",
+
+
+
+data:{
+
+
+
+labels:names,
+
+
+
+datasets:[
+
+
+{
+
+
+label:"Risk",
+
+
+data:names.map(
+
+x=>risk[x].risk
+
+)
+
+
+
+},
+
+
+
+{
+
+
+label:"Reward",
+
+
+data:names.map(
+
+x=>risk[x].reward
+
+)
+
 
 }
 
 
 
-</script>
+]
+
+},
 
 
 
-</body>
+options:{
 
-</html>
+
+responsive:true,
+
+
+scales:{
+
+
+y:{
+
+
+beginAtZero:true,
+
+
+max:100
+
+
+}
+
+
+}
+
+
+}
+
+
+
+}
+
+
+
+);
+
+
+
+}
+
+
+
+
+
+
+
+
+// ============================================================
+// FUTURE PATH
+// ============================================================
+
+
+
+const future =
+document.getElementById(
+"futurePath"
+);
+
+
+
+Object.entries(
+result.future_paths
+)
+.forEach(([name,path])=>{
+
+
+
+future.innerHTML += `
+
+
+<div class="timeline-item">
+
+
+<h3>
+
+${name}
+
+</h3>
+
+
+
+<ul>
+
+${path.map(
+
+x=>`<li>${x}</li>`
+
+).join("")}
+
+</ul>
+
+
+</div>
+
+
+`;
+
+
+
+});
+
+
+
+
+
+
+
+
+
+// ============================================================
+// TIMELINE
+// ============================================================
+
+
+
+const timeline =
+document.getElementById(
+"timeline"
+);
+
+
+
+Object.values(
+result.timeline
+)[0]
+.forEach(step=>{
+
+
+timeline.innerHTML += `
+
+
+<div class="timeline-item">
+
+
+${step}
+
+
+</div>
+
+
+`;
+
+
+
+});
+
+
+
+}
