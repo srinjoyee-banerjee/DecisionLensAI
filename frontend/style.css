@@ -1768,3 +1768,133 @@ footer span {
     }
 
 }
+/* ============================================================
+   DECISIONLENS RESULT UPGRADE
+   ============================================================ */
+
+.report-title span {
+    color: var(--electric);
+    text-shadow: 0 0 25px rgba(49,92,255,.45);
+}
+
+.confidence-box {
+    min-width: 190px;
+    padding: 25px;
+    border: 1px solid rgba(0,217,255,.3);
+    border-radius: 14px;
+    background: rgba(0,217,255,.04);
+    box-shadow: 0 0 35px rgba(0,217,255,.08);
+}
+
+.confidence-box span {
+    display: block;
+    color: var(--muted);
+    font-size: 9px;
+    letter-spacing: 2px;
+    font-weight: 900;
+}
+
+.confidence-box strong {
+    display: block;
+    margin: 8px 0;
+    color: var(--cyan);
+    font-size: 42px;
+    line-height: 1;
+}
+
+.confidence-box small {
+    color: #627095;
+    font-size: 8px;
+    letter-spacing: 1.5px;
+    font-weight: 800;
+}
+
+.recommendation-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.live-indicator {
+    color: #52ff9a;
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+}
+
+.live-indicator span {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-right: 7px;
+    border-radius: 50%;
+    background: #52ff9a;
+    box-shadow: 0 0 12px #52ff9a;
+}
+
+.card-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 25px;
+}
+
+.card-heading .result-number {
+    margin: 0;
+    font-size: 16px;
+}
+
+.card-label {
+    color: var(--cyan);
+    font-size: 8px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    margin-bottom: 5px;
+}
+
+.red-label {
+    color: var(--red);
+}
+
+.evidence-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 20px;
+}
+
+.evidence-header h2 {
+    margin-top: 8px;
+    font-size: 25px;
+}
+
+.evidence-status {
+    padding: 9px 13px;
+    border: 1px solid rgba(0,217,255,.25);
+    border-radius: 6px;
+    color: var(--cyan);
+    font-size: 8px;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+}
+
+.evidence-title {
+    color: white;
+    font-weight: 800;
+    font-size: 14px;
+}
+
+@media(max-width:800px) {
+
+    .confidence-box {
+        width: 100%;
+    }
+
+    .recommendation-top,
+    .evidence-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+}
