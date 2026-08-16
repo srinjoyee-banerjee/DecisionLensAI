@@ -1,7 +1,7 @@
 # ============================================================
 # DECISIONLENS AI
 # UNIVERSAL AI DECISION ADVISOR
-# RAG POWERED DECISION REASONING ENGINE
+# RAG BASED PERSONAL DECISION REASONING
 # ============================================================
 
 from flask import Flask, request, jsonify, send_from_directory
@@ -10,20 +10,17 @@ from flask_cors import CORS
 import os
 import json
 import re
-import random
 
 
 # ============================================================
-# APP CONFIGURATION
+# APP
 # ============================================================
 
 app = Flask(__name__)
 CORS(app)
 
 
-BASE_DIR = os.path.dirname(
-    os.path.abspath(__file__)
-)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 FRONTEND_DIR = os.path.join(
     BASE_DIR,
@@ -38,13 +35,12 @@ KB_FILE = os.path.join(
 
 
 # ============================================================
-# LOAD KNOWLEDGE BASE
+# KNOWLEDGE BASE
 # ============================================================
 
 def load_kb():
 
     if not os.path.exists(KB_FILE):
-        print("Knowledge base not found")
         return []
 
 
@@ -65,841 +61,556 @@ def load_kb():
 
         if isinstance(data,dict):
 
-            for key in [
+            for k in [
                 "documents",
                 "knowledge",
-                "entries",
-                "data"
+                "data",
+                "entries"
             ]:
 
-                if key in data:
-                    return data[key]
-
-
-        return []
+                if k in data:
+                    return data[k]
 
 
     except Exception as e:
 
-        print(
-            "KB ERROR:",
-            e
-        )
+        print(e)
 
-        return []
+
+    return []
 
 
 
-KB = load_kb()
+KB=load_kb()
 
 
 
 # ============================================================
-# TEXT UTILITIES
+# TEXT
 # ============================================================
 
 
-STOPWORDS=set([
-
-"the",
-"and",
-"for",
-"with",
-"should",
-"would",
-"could",
-"which",
-"what",
-"better",
-"best",
-"choose",
-"option",
-"between",
-"or",
-"vs",
-"versus",
-"is",
-"to",
-"of",
-"in",
-"a",
-"an",
-"my",
-"i"
-
-])
-
-
-
-def normalize(text):
-
-    return re.sub(
-        r"\s+",
-        " ",
-        str(text)
-        .lower()
-        .strip()
-    )
-
-
-
-def tokenize(text):
-
-    words=re.findall(
-        r"[a-zA-Z0-9+#.-]{3,}",
-        normalize(text)
-    )
-
-
-    return [
-
-        w for w in words
-
-        if w not in STOPWORDS
-
-    ]
-
-
-
-def extract_text(item):
-
-    if isinstance(item,str):
-        return item
-
-
-    if isinstance(item,dict):
-
-        result=[]
-
-
-        for key in [
-            "title",
-            "topic",
-            "content",
-            "text",
-            "description",
-            "summary"
-        ]:
-
-            if item.get(key):
-
-                result.append(
-                    str(item[key])
-                )
-
-
-        return " ".join(result)
-
-
-    return str(item)
-
-
-
-
-# ============================================================
-# OPTION EXTRACTION
-# ============================================================
-
-
-def clean_option(value):
-
-    value=value.strip(
-        " ?.,"
-    )
-
-
-    remove_patterns=[
-
-        "should i",
-
-        "should we",
-
-        "which is better",
-
-        "what is better",
-
-        "choose",
-
-        "pick"
-
-    ]
-
-
-    for pattern in remove_patterns:
-
-        value=re.sub(
-            pattern,
-            "",
-            value,
-            flags=re.I
-        )
-
-
-    return value.strip()
-
-
-
-def extract_options(question):
-
-
-    patterns=[
-
-
-        r"(.+?)\s+vs\.?\s+(.+)",
-
-
-        r"between\s+(.+?)\s+and\s+(.+)",
-
-
-        r"(.+?)\s+or\s+(.+)"
-
-
-    ]
-
-
-
-    for pattern in patterns:
-
-
-        match=re.search(
-            pattern,
-            question,
-            re.I
-        )
-
-
-        if match:
-
-
-            a=clean_option(
-                match.group(1)
-            )
-
-
-            b=clean_option(
-                match.group(2)
-            )
-
-
-            if len(a)>2 and len(b)>2:
-
-                return a,b
-
-
-
-    return None,None
-
-
-
-
-# ============================================================
-# CONTEXT DETECTION
-# ============================================================
-
-
-def detect_context(question):
-
-    text=normalize(question)
-
-
-    categories={
-
-
-        "career":[
-
-            "job",
-            "career",
-            "salary",
-            "mba",
-            "work",
-            "profession"
-
-        ],
-
-
-        "technology":[
-
-            "python",
-            "java",
-            "coding",
-            "software",
-            "programming"
-
-        ],
-
-
-        "finance":[
-
-            "money",
-            "stock",
-            "invest",
-            "loan",
-            "house"
-
-        ],
-
-
-        "education":[
-
-            "course",
-            "degree",
-            "study",
-            "college",
-            "master"
-
-        ],
-
-
-        "business":[
-
-            "startup",
-            "business",
-            "company"
-
-        ]
-
-    }
-
-
-
-    found=[]
-
-
-    for category,words in categories.items():
-
-        for word in words:
-
-            if word in text:
-
-                found.append(category)
-
-                break
-
-
-
-    return found or ["general"]
-
-
-
-
-
-# ============================================================
-# RAG RETRIEVAL
-# ============================================================
-
-
-def retrieve_evidence(question):
-
-
-    query_tokens=set(
-        tokenize(question)
-    )
-
-
-    results=[]
-
-
-
-    for item in KB:
-
-
-        text=extract_text(item)
-
-
-        tokens=set(
-            tokenize(text)
-        )
-
-
-        match=len(
-            query_tokens.intersection(tokens)
-        )
-
-
-        if match>0:
-
-
-            results.append({
-
-                "text":text,
-
-                "relevance":match
-
-            })
-
-
-
-    results.sort(
-
-        key=lambda x:x["relevance"],
-
-        reverse=True
-
-    )
-
-
-    return results[:5]
-# ============================================================
-# DECISIONLENS AI
-# UNIVERSAL AI DECISION ADVISOR
-# RAG POWERED DECISION REASONING ENGINE
-# ============================================================
-
-from flask import Flask, request, jsonify, send_from_directory
-from flask_cors import CORS
-
-import os
-import json
-import re
-import random
-
-
-# ============================================================
-# APP CONFIGURATION
-# ============================================================
-
-app = Flask(__name__)
-CORS(app)
-
-
-BASE_DIR = os.path.dirname(
-    os.path.abspath(__file__)
-)
-
-FRONTEND_DIR = os.path.join(
-    BASE_DIR,
-    "frontend"
-)
-
-KB_FILE = os.path.join(
-    BASE_DIR,
-    "knowledge_base.json"
-)
-
-
-
-# ============================================================
-# LOAD KNOWLEDGE BASE
-# ============================================================
-
-def load_kb():
-
-    if not os.path.exists(KB_FILE):
-        print("Knowledge base not found")
-        return []
-
-
-    try:
-
-        with open(
-            KB_FILE,
-            "r",
-            encoding="utf-8"
-        ) as f:
-
-            data=json.load(f)
-
-
-        if isinstance(data,list):
-            return data
-
-
-        if isinstance(data,dict):
-
-            for key in [
-                "documents",
-                "knowledge",
-                "entries",
-                "data"
-            ]:
-
-                if key in data:
-                    return data[key]
-
-
-        return []
-
-
-    except Exception as e:
-
-        print(
-            "KB ERROR:",
-            e
-        )
-
-        return []
-
-
-
-KB = load_kb()
-
-
-
-# ============================================================
-# TEXT UTILITIES
-# ============================================================
-
-
-STOPWORDS=set([
-
-"the",
-"and",
-"for",
-"with",
-"should",
-"would",
-"could",
-"which",
-"what",
-"better",
-"best",
-"choose",
-"option",
-"between",
-"or",
-"vs",
-"versus",
-"is",
-"to",
-"of",
-"in",
-"a",
-"an",
-"my",
-"i"
-
-])
-
-
-
-def normalize(text):
-
-    return re.sub(
-        r"\s+",
-        " ",
-        str(text)
-        .lower()
-        .strip()
-    )
-
-
-
-def tokenize(text):
-
-    words=re.findall(
-        r"[a-zA-Z0-9+#.-]{3,}",
-        normalize(text)
-    )
-
-
-    return [
-
-        w for w in words
-
-        if w not in STOPWORDS
-
-    ]
-
-
-
-def extract_text(item):
-
-    if isinstance(item,str):
-        return item
-
-
-    if isinstance(item,dict):
-
-        result=[]
-
-
-        for key in [
-            "title",
-            "topic",
-            "content",
-            "text",
-            "description",
-            "summary"
-        ]:
-
-            if item.get(key):
-
-                result.append(
-                    str(item[key])
-                )
-
-
-        return " ".join(result)
-
-
-    return str(item)
-
-
-
-
-# ============================================================
-# OPTION EXTRACTION
-# ============================================================
-
-
-def clean_option(value):
-
-    value=value.strip(
-        " ?.,"
-    )
-
-
-    remove_patterns=[
-
-        "should i",
-
-        "should we",
-
-        "which is better",
-
-        "what is better",
-
-        "choose",
-
-        "pick"
-
-    ]
-
-
-    for pattern in remove_patterns:
-
-        value=re.sub(
-            pattern,
-            "",
-            value,
-            flags=re.I
-        )
-
-
-    return value.strip()
-
-
-
-def extract_options(question):
-
-
-    patterns=[
-
-
-        r"(.+?)\s+vs\.?\s+(.+)",
-
-
-        r"between\s+(.+?)\s+and\s+(.+)",
-
-
-        r"(.+?)\s+or\s+(.+)"
-
-
-    ]
-
-
-
-    for pattern in patterns:
-
-
-        match=re.search(
-            pattern,
-            question,
-            re.I
-        )
-
-
-        if match:
-
-
-            a=clean_option(
-                match.group(1)
-            )
-
-
-            b=clean_option(
-                match.group(2)
-            )
-
-
-            if len(a)>2 and len(b)>2:
-
-                return a,b
-
-
-
-    return None,None
-
-
-
-
-# ============================================================
-# CONTEXT DETECTION
-# ============================================================
-
-
-def detect_context(question):
-
-    text=normalize(question)
-
-
-    categories={
-
-
-        "career":[
-
-            "job",
-            "career",
-            "salary",
-            "mba",
-            "work",
-            "profession"
-
-        ],
-
-
-        "technology":[
-
-            "python",
-            "java",
-            "coding",
-            "software",
-            "programming"
-
-        ],
-
-
-        "finance":[
-
-            "money",
-            "stock",
-            "invest",
-            "loan",
-            "house"
-
-        ],
-
-
-        "education":[
-
-            "course",
-            "degree",
-            "study",
-            "college",
-            "master"
-
-        ],
-
-
-        "business":[
-
-            "startup",
-            "business",
-            "company"
-
-        ]
-
-    }
-
-
-
-    found=[]
-
-
-    for category,words in categories.items():
-
-        for word in words:
-
-            if word in text:
-
-                found.append(category)
-
-                break
-
-
-
-    return found or ["general"]
-
-
-
-
-
-# ============================================================
-# RAG RETRIEVAL
-# ============================================================
-
-
-def retrieve_evidence(question):
-
-
-    query_tokens=set(
-        tokenize(question)
-    )
-
-
-    results=[]
-
-
-
-    for item in KB:
-
-
-        text=extract_text(item)
-
-
-        tokens=set(
-            tokenize(text)
-        )
-
-
-        match=len(
-            query_tokens.intersection(tokens)
-        )
-
-
-        if match>0:
-
-
-            results.append({
-
-                "text":text,
-
-                "relevance":match
-
-            })
-
-
-
-    results.sort(
-
-        key=lambda x:x["relevance"],
-
-        reverse=True
-
-    )
-
-
-    return results[:5]
-{
-"recommendation":"Python",
-
-"why":[
-"Python aligns better with AI ecosystem and research adoption.",
-"Python matches more important factors considered.",
-"The recommendation considers practicality and future relevance."
-],
-
-"why_not":[
-"Java remains valuable for enterprise systems.",
-"Java may be preferable where performance and large systems matter."
-],
-
-"tradeoffs":[
-"Python: faster experimentation.",
-"Java: stronger enterprise stability."
-]
+STOPWORDS={
+"the","and","for",
+"should","which",
+"what","is",
+"better","best",
+"choose","between",
+"or","vs","versus",
+"i","my","to",
+"a","an"
 }
+
+
+
+def clean(text):
+
+    return re.sub(
+        r"\s+",
+        " ",
+        str(text).lower().strip()
+    )
+
+
+
+def tokens(text):
+
+    words=re.findall(
+        r"[a-zA-Z0-9+#.-]{3,}",
+        clean(text)
+    )
+
+
+    return [
+        w for w in words
+        if w not in STOPWORDS
+    ]
+
+
+
+def extract_text(item):
+
+    if isinstance(item,str):
+        return item
+
+
+    if isinstance(item,dict):
+
+        return " ".join(
+            str(item.get(k,""))
+            for k in [
+                "title",
+                "topic",
+                "content",
+                "text",
+                "summary"
+            ]
+        )
+
+
+    return str(item)
+
+
+
 # ============================================================
+# OPTION EXTRACTION
+# ============================================================
+
+
+def extract_options(question):
+
+
+    patterns=[
+
+        r"(.+?)\s+vs\.?\s+(.+)",
+
+        r"between\s+(.+?)\s+and\s+(.+)",
+
+        r"should i\s+(.+?)\s+or\s+(.+)",
+
+        r"(.+?)\s+or\s+(.+)"
+
+    ]
+
+
+    for p in patterns:
+
+        m=re.search(
+            p,
+            question,
+            re.I
+        )
+
+
+        if m:
+
+            a=m.group(1).strip(
+                " ?."
+            )
+
+            b=m.group(2).strip(
+                " ?."
+            )
+
+
+            if len(a)>2 and len(b)>2:
+
+                return a,b
+
+
+    return None,None
+
+
+
+# ============================================================
+# RAG SEARCH
+# ============================================================
+
+
+def retrieve(question):
+
+    q=set(
+        tokens(question)
+    )
+
+
+    results=[]
+
+
+    for item in KB:
+
+        text=extract_text(item)
+
+        score=len(
+            q.intersection(
+                set(tokens(text))
+            )
+        )
+
+
+        if score:
+
+            results.append(
+                {
+                    "text":text,
+                    "score":score
+                }
+            )
+
+
+    results.sort(
+        key=lambda x:x["score"],
+        reverse=True
+    )
+
+
+    return results[:3]
+    # ============================================================
+# DECISION REASONING ENGINE
+# ============================================================
+
+
+def detect_goal(question):
+
+    q=clean(question)
+
+
+    goals=[]
+
+
+    mapping={
+
+        "career":[
+            "job",
+            "career",
+            "salary",
+            "placement",
+            "future"
+        ],
+
+        "learning":[
+            "learn",
+            "study",
+            "course",
+            "skill"
+        ],
+
+        "finance":[
+            "money",
+            "invest",
+            "stock",
+            "buy",
+            "loan"
+        ],
+
+        "technology":[
+            "code",
+            "programming",
+            "software",
+            "python",
+            "java"
+        ]
+
+    }
+
+
+
+    for g,words in mapping.items():
+
+        for w in words:
+
+            if w in q:
+
+                goals.append(g)
+                break
+
+
+
+    return goals or ["general"]
+
+
+
+
+
+def option_strength(option,goal):
+
+
+    text=clean(option)
+
+
+    score=50
+
+
+
+    # technology decisions
+
+    if goal=="technology":
+
+        if any(
+            x in text
+            for x in [
+                "python",
+                "ai",
+                "machine learning"
+            ]
+        ):
+
+            score+=25
+
+
+        if "java" in text:
+
+            score+=18
+
+
+
+    # career decisions
+
+    if goal=="career":
+
+        score+=15
+
+
+
+    # learning
+
+    if goal=="learning":
+
+        score+=20
+
+
+
+    # finance
+
+    if goal=="finance":
+
+        score+=10
+
+
+
+    return min(
+        95,
+        score
+    )
+
+
+
+
+
+def create_reasoning(
+        option_a,
+        option_b,
+        question,
+        evidence
+):
+
+
+    goals=detect_goal(question)
+
+
+    goal=goals[0]
+
+
+
+    score_a=option_strength(
+        option_a,
+        goal
+    )
+
+
+    score_b=option_strength(
+        option_b,
+        goal
+    )
+
+
+
+    if score_a>=score_b:
+
+        winner=option_a
+        loser=option_b
+
+        win_score=score_a
+        lose_score=score_b
+
+
+    else:
+
+        winner=option_b
+        loser=option_a
+
+        win_score=score_b
+        lose_score=score_a
+
+
+
+
+    # -------------------------------
+    # HUMAN STYLE EXPLANATION
+    # -------------------------------
+
+
+    why=[
+
+        f"{winner} is better aligned with your current goal ({goal}).",
+
+        f"It provides stronger long-term value based on the context of your decision.",
+
+        f"The choice is supported by practical considerations rather than only popularity."
+
+    ]
+
+
+
+    why_not=[
+
+        f"{loser} is not a bad choice, but it has limitations for this specific objective.",
+
+        f"It may be better when different priorities become important.",
+
+        f"The alternative can still work depending on your constraints."
+
+    ]
+
+
+
+    advantages=[
+
+        f"{winner} can provide stronger growth potential.",
+
+        f"{winner} offers better alignment with future opportunities.",
+
+        "It keeps more possibilities open for future decisions."
+
+    ]
+
+
+
+    disadvantages=[
+
+        f"{winner} may require more effort, time or commitment.",
+
+        "The learning curve or transition cost may be higher.",
+
+        "Results depend on execution and consistency."
+
+    ]
+
+
+
+    tradeoffs=[
+
+        f"Choosing {winner} means prioritizing long-term value over immediate convenience.",
+
+        f"{loser} may provide some advantages that {winner} does not.",
+
+        "The final choice depends on which factor matters most to you."
+
+    ]
+
+
+
+    confidence=70
+
+
+    if evidence:
+
+        confidence+=10
+
+
+    if abs(
+        score_a-score_b
+    )>15:
+
+        confidence+=10
+
+
+
+    return {
+
+
+        "recommendation":winner,
+
+
+        "confidence":min(
+            confidence,
+            95
+        ),
+
+
+        "scores":{
+
+            option_a:
+            win_score if winner==option_a else lose_score,
+
+            option_b:
+            win_score if winner==option_b else lose_score
+
+        },
+
+
+        "why":why,
+
+
+        "why_not":why_not,
+
+
+        "advantages":advantages,
+
+
+        "disadvantages":disadvantages,
+
+
+        "tradeoffs":tradeoffs,
+
+
+        "final_advice":
+
+        (
+        f"If your priority is {goal}, "
+        f"I would choose {winner}. "
+        f"However, reconsider {loser} if your priorities change."
+        )
+
+
+    }
+
+
+
+
+
+def analyze_decision(question):
+
+
+    option_a,option_b=extract_options(
+        question
+    )
+
+
+    evidence=retrieve(
+        question
+    )
+
+
+
+    if not option_a or not option_b:
+
+
+        return {
+
+            "error":
+            "Please provide two options to compare. Example: Python vs Java"
+
+        }
+
+
+
+
+    result=create_reasoning(
+
+        option_a,
+        option_b,
+
+        question,
+
+        evidence
+
+    )
+
+
+    result["question"]=question
+
+
+    result["options"]=[
+
+        option_a,
+        option_b
+
+    ]
+
+
+    return result
+    # ============================================================
 # FRONTEND ROUTES
 # ============================================================
 
@@ -934,15 +645,13 @@ def result():
 
 
 
-@app.route("/<path:filename>")
-def frontend_files(filename):
+@app.route("/<path:file>")
+def frontend_files(file):
 
     return send_from_directory(
         FRONTEND_DIR,
-        filename
+        file
     )
-
-
 
 
 
@@ -954,36 +663,20 @@ def frontend_files(filename):
 @app.route("/api/health")
 def health():
 
-
     return jsonify({
 
-        "status":
-
-            "online",
-
+        "status":"online",
 
         "service":
-
-            "DecisionLens AI",
-
+        "DecisionLens AI",
 
         "engine":
-
-            "Universal AI Decision Advisor",
-
-
-        "architecture":
-
-            "RAG Powered Decision Reasoning",
-
+        "Universal Decision Reasoning Engine",
 
         "knowledge_records":
-
-            len(KB)
+        len(KB)
 
     })
-
-
 
 
 
@@ -996,7 +689,8 @@ def health():
     "/api/analyze",
     methods=["POST"]
 )
-def analyze_api():
+def api_analyze():
+
 
     try:
 
@@ -1008,41 +702,23 @@ def analyze_api():
 
 
         question=str(
-
             data.get(
                 "decision",
                 ""
             )
-
         ).strip()
 
 
 
-        if not question:
+        if len(question)<5:
 
 
             return jsonify({
 
                 "error":
-
-                "Please enter a decision."
-
-            }),400
-
-
-
-
-        if len(question)<8:
-
-
-            return jsonify({
-
-                "error":
-
-                "Please provide more details."
+                "Please enter a meaningful decision."
 
             }),400
-
 
 
 
@@ -1064,7 +740,7 @@ def analyze_api():
 
 
         print(
-            "ENGINE ERROR:",
+            "ERROR:",
             e
         )
 
@@ -1072,16 +748,12 @@ def analyze_api():
         return jsonify({
 
             "error":
-
             "Decision engine failed.",
 
-
             "details":
-
             str(e)
 
         }),500
-
 
 
 
@@ -1096,17 +768,11 @@ if __name__=="__main__":
 
 
     port=int(
-
         os.environ.get(
-
             "PORT",
-
             5000
-
         )
-
     )
-
 
 
     app.run(
