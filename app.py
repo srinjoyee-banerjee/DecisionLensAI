@@ -1,1403 +1,518 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 
-import json
 import os
+import json
 import re
 import math
 
 
-# ============================================================
+# =====================================================
 # DECISIONLENS AI
-# RAG-POWERED DECISION INTELLIGENCE ENGINE
-# ============================================================
+# UNIVERSAL DECISION INTELLIGENCE ENGINE
+# =====================================================
+
 
 app = Flask(__name__)
 CORS(app)
 
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
-KB_FILE = os.path.join(BASE_DIR, "knowledge_base.json")
+
+FRONTEND_DIR = os.path.join(
+    BASE_DIR,
+    "frontend"
+)
+
+KB_FILE = os.path.join(
+    BASE_DIR,
+    "knowledge_base.json"
+)
 
 
-# ============================================================
-# KNOWLEDGE BASE
-# ============================================================
 
-def load_knowledge_base():
+# =====================================================
+# LOAD KNOWLEDGE BASE
+# =====================================================
 
-    if not os.path.exists(KB_FILE):
-        print("Knowledge base not found:", KB_FILE)
-        return []
+
+def load_kb():
 
     try:
-        with open(KB_FILE, "r", encoding="utf-8") as file:
-            data = json.load(file)
 
-        if isinstance(data, list):
+        with open(
+            KB_FILE,
+            "r",
+            encoding="utf-8"
+        ) as f:
+
+            data=json.load(f)
+
+
+        if isinstance(data,list):
             return data
 
-        if isinstance(data, dict):
+        if isinstance(data,dict):
 
-            for key in [
+            for k in [
                 "documents",
                 "knowledge",
-                "entries",
                 "data",
                 "items"
             ]:
-                if key in data and isinstance(data[key], list):
-                    return data[key]
 
-            return [data]
+                if k in data:
+                    return data[k]
 
-    except Exception as error:
-        print("Knowledge base error:", error)
+
         return []
 
 
-KNOWLEDGE_BASE = load_knowledge_base()
+    except Exception:
+
+        return []
 
 
-# ============================================================
-# STOPWORDS
-# ============================================================
 
-STOPWORDS = {
-    "the", "and", "for", "with", "that", "this",
-    "should", "would", "could", "from", "have",
-    "will", "into", "about", "between", "which",
-    "what", "when", "where", "your", "you",
-    "than", "then", "they", "them", "their",
-    "choose", "choice", "option", "decision",
-    "better", "best", "using", "use", "want",
-    "need", "like", "i", "me", "my",
-    "to", "of", "in", "on", "a", "an", "is",
-    "or", "vs", "versus", "should", "we",
-    "can", "do", "does", "would", "could"
+KB = load_kb()
+
+
+
+# =====================================================
+# TEXT PROCESSING
+# =====================================================
+
+
+STOPWORDS={
+"the","is","a","an","to",
+"for","and","or","should",
+"i","my","me","which",
+"better","best","choose",
+"between","vs","versus"
 }
 
 
-# ============================================================
-# TEXT UTILITIES
-# ============================================================
 
-def normalize(text):
+def clean(text):
 
     return re.sub(
         r"\s+",
         " ",
-        str(text).lower().strip()
-    )
+        str(text).lower()
+    ).strip()
 
 
-def tokenize(text):
 
-    words = re.findall(
-        r"[a-zA-Z][a-zA-Z0-9+#.-]{2,}",
-        normalize(text)
+def tokens(text):
+
+    words=re.findall(
+        r"[a-zA-Z0-9+#.-]{3,}",
+        clean(text)
     )
 
     return [
-        word
-        for word in words
-        if word not in STOPWORDS
+        w for w in words
+        if w not in STOPWORDS
     ]
 
 
-def extract_text(item):
 
-    if isinstance(item, str):
-        return item
-
-    if isinstance(item, dict):
-
-        parts = []
-
-        for key in [
-            "title",
-            "content",
-            "text",
-            "description",
-            "summary",
-            "answer",
-            "topic",
-            "category"
-        ]:
-
-            value = item.get(key)
-
-            if value:
-                parts.append(str(value))
-
-        return " ".join(parts)
-
-    return str(item)
+# =====================================================
+# UNIVERSAL OPTION EXTRACTION
+# =====================================================
 
 
-# ============================================================
-# OPTION EXTRACTION
-# ============================================================
-
-def clean_option(option):
-
-    option = option.strip(" ?.,:;")
-
-    option = re.sub(
-        r"^(should i|should we|which is better|what is better)\s+",
-        "",
-        option,
-        flags=re.IGNORECASE
-    )
-
-    option = re.sub(
-        r"^(choose|pick|select)\s+",
-        "",
-        option,
-        flags=re.IGNORECASE
-    )
-
-    return option.strip(" ?.,:;")
+def extract_options(question):
 
 
-def extract_options(decision):
+    patterns=[
 
-    text = decision.strip()
+        r"(.+?)\s+vs\s+(.+)",
 
-    patterns = [
-
-        r"(.+?)\s+(?:vs\.?|versus)\s+(.+)",
+        r"(.+?)\s+versus\s+(.+)",
 
         r"between\s+(.+?)\s+and\s+(.+)",
 
-        r"choose\s+(.+?)\s+or\s+(.+)",
-
-        r"should\s+i\s+(?:choose|pick|select)\s+(.+?)\s+or\s+(.+)",
-
-        r"should\s+i\s+(?:take|do|go\s+with)\s+(.+?)\s+or\s+(.+)",
+        r"should i\s+(.+?)\s+or\s+(.+)",
 
         r"(.+?)\s+or\s+(.+)"
+
+
     ]
 
-    for pattern in patterns:
 
-        match = re.search(
-            pattern,
-            text,
-            re.IGNORECASE
+    for p in patterns:
+
+        m=re.search(
+            p,
+            question,
+            re.I
         )
 
-        if not match:
-            continue
 
-        option_a = clean_option(match.group(1))
-        option_b = clean_option(match.group(2))
+        if m:
 
-        if (
-            2 <= len(option_a) <= 120
-            and 2 <= len(option_b) <= 120
-        ):
-
-            # Avoid accidentally treating a huge sentence as an option
-            if len(option_a.split()) <= 15 and len(option_b.split()) <= 15:
-                return option_a, option_b
-
-    return None, None
+            a=m.group(1)
+            b=m.group(2)
 
 
-# ============================================================
-# DOMAIN DETECTION
-# ============================================================
-
-DOMAIN_KEYWORDS = {
-
-    "ml_ds": [
-        "machine learning",
-        "data science",
-        "data scientist",
-        "ml engineer",
-        "ai engineer",
-        "deep learning",
-        "neural network",
-        "random forest",
-        "xgboost",
-        "classification",
-        "regression",
-        "dataset",
-        "feature engineering",
-        "computer vision",
-        "nlp",
-        "python",
-        "algorithm",
-        "model"
-    ],
-
-    "career": [
-        "career",
-        "job",
-        "role",
-        "profession",
-        "salary",
-        "placement",
-        "employment",
-        "industry",
-        "company",
-        "career path",
-        "career option"
-    ],
-
-    "education": [
-        "phd",
-        "masters",
-        "master's",
-        "degree",
-        "college",
-        "university",
-        "course",
-        "study",
-        "research",
-        "higher education",
-        "certification"
-    ],
-
-    "technology": [
-        "software",
-        "framework",
-        "technology",
-        "database",
-        "cloud",
-        "aws",
-        "azure",
-        "docker",
-        "kubernetes",
-        "react",
-        "flask",
-        "api",
-        "backend",
-        "frontend",
-        "github",
-        "python"
-    ],
-
-    "business": [
-        "business",
-        "startup",
-        "company",
-        "investment",
-        "market",
-        "customer",
-        "revenue",
-        "product",
-        "enterprise",
-        "profit"
-    ],
-
-    "finance": [
-        "investment",
-        "stock",
-        "fund",
-        "loan",
-        "money",
-        "finance",
-        "financial",
-        "return",
-        "portfolio",
-        "expense",
-        "budget"
-    ],
-
-    "health": [
-        "health",
-        "exercise",
-        "fitness",
-        "diet",
-        "workout",
-        "nutrition",
-        "sleep"
-    ]
-}
-
-
-def detect_domain(decision):
-
-    text = normalize(decision)
-
-    scores = {}
-
-    for domain, keywords in DOMAIN_KEYWORDS.items():
-
-        score = 0
-
-        for keyword in keywords:
-
-            if keyword in text:
-                score += 1
-
-        scores[domain] = score
-
-    best_domain = max(
-        scores,
-        key=scores.get
-    )
-
-    if scores[best_domain] == 0:
-        return "general"
-
-    return best_domain
-
-
-# ============================================================
-# RAG RETRIEVAL
-# ============================================================
-
-def retrieve(decision, limit=5):
-
-    decision_tokens = set(
-        tokenize(decision)
-    )
-
-    if not decision_tokens:
-        return []
-
-    scored = []
-
-    for item in KNOWLEDGE_BASE:
-
-        text = extract_text(item)
-
-        if not text:
-            continue
-
-        knowledge_tokens = set(
-            tokenize(text)
-        )
-
-        overlap = decision_tokens.intersection(
-            knowledge_tokens
-        )
-
-        if not overlap:
-            continue
-
-        # Basic lexical relevance
-        overlap_score = len(overlap)
-
-        # Give additional weight to important phrases
-        phrase_bonus = 0
-
-        decision_lower = normalize(decision)
-        text_lower = normalize(text)
-
-        for token in decision_tokens:
-
-            if len(token) >= 5 and token in text_lower:
-                phrase_bonus += 0.25
-
-        score = overlap_score + phrase_bonus
-
-        scored.append(
-            (
-                score,
-                item,
-                list(overlap)
+            a=re.sub(
+                r"^(choose|pick|take)\s+",
+                "",
+                a,
+                flags=re.I
             )
-        )
 
-    scored.sort(
-        key=lambda x: x[0],
+
+            return (
+                a.strip(" ?"),
+                b.strip(" ?")
+            )
+
+
+    return None,None
+
+
+
+# =====================================================
+# RAG RETRIEVAL
+# =====================================================
+
+
+def retrieve(question):
+
+
+    q=set(tokens(question))
+
+    results=[]
+
+
+    for doc in KB:
+
+
+        text=json.dumps(
+            doc
+        ).lower()
+
+
+        score=0
+
+
+        for word in q:
+
+            if word in text:
+                score+=1
+
+
+        if score:
+
+
+            results.append(
+                {
+                "content":text[:500],
+                "score":score
+                }
+            )
+
+
+
+    results.sort(
+        key=lambda x:x["score"],
         reverse=True
     )
 
-    results = []
 
-    for score, item, overlap in scored[:limit]:
-
-        if isinstance(item, dict):
-
-            title = item.get(
-                "title",
-                item.get(
-                    "topic",
-                    "Decision Knowledge"
-                )
-            )
-
-            content = item.get(
-                "content",
-                item.get(
-                    "text",
-                    item.get(
-                        "description",
-                        item.get(
-                            "summary",
-                            ""
-                        )
-                    )
-                )
-            )
-
-        else:
-
-            title = "Decision Knowledge"
-            content = str(item)
-
-        results.append({
-
-            "title": str(title),
-
-            "content": str(content),
-
-            "relevance":
-                round(
-                    min(
-                        100,
-                        score * 12
-                    ),
-                    1
-                ),
-
-            "matched_terms":
-                overlap[:8]
-
-        })
-
-    return results
+    return results[:5]
 
 
-# ============================================================
-# KEYWORD GROUPS FOR DECISION SCORING
-# ============================================================
 
-OBJECTIVE_TERMS = {
-    "growth": [
-        "growth",
-        "future",
-        "career",
-        "long term",
-        "progression",
-        "advancement"
-    ],
-
-    "income": [
-        "salary",
-        "income",
-        "pay",
-        "money",
-        "financial",
-        "earning",
-        "return"
-    ],
-
-    "skills": [
-        "skill",
-        "technical",
-        "learning",
-        "expertise",
-        "knowledge",
-        "experience"
-    ],
-
-    "flexibility": [
-        "flexibility",
-        "flexible",
-        "options",
-        "versatile",
-        "mobility",
-        "transferable"
-    ],
-
-    "risk": [
-        "risk",
-        "safe",
-        "security",
-        "stable",
-        "uncertain",
-        "uncertainty"
-    ],
-
-    "cost": [
-        "cost",
-        "price",
-        "budget",
-        "expensive",
-        "affordable",
-        "investment"
-    ],
-
-    "time": [
-        "time",
-        "quick",
-        "fast",
-        "duration",
-        "years",
-        "months"
-    ]
-}
+# =====================================================
+# UNIVERSAL DECISION FACTORS
+# =====================================================
 
 
-def detect_objectives(decision):
+FACTORS=[
 
-    text = normalize(decision)
+"cost",
 
-    objectives = []
+"time requirement",
 
-    for objective, keywords in OBJECTIVE_TERMS.items():
+"learning difficulty",
 
-        for keyword in keywords:
+"future growth",
 
-            if keyword in text:
-                objectives.append(objective)
-                break
+"risk",
 
-    if not objectives:
+"flexibility",
 
-        objectives = [
-            "growth",
-            "skills",
-            "risk",
-            "flexibility"
-        ]
+"practical usefulness",
 
-    return objectives
+"long term value"
+
+]
 
 
-# ============================================================
-# OPTION-SPECIFIC SIGNALS
-# ============================================================
 
-OPTION_PROFILES = {
-
-    "machine learning": {
-        "skills": 95,
-        "growth": 94,
-        "flexibility": 84,
-        "risk": 70
-    },
-
-    "ml": {
-        "skills": 95,
-        "growth": 94,
-        "flexibility": 84,
-        "risk": 70
-    },
-
-    "ml engineer": {
-        "skills": 97,
-        "growth": 95,
-        "flexibility": 88,
-        "risk": 68
-    },
-
-    "data science": {
-        "skills": 90,
-        "growth": 90,
-        "flexibility": 92,
-        "risk": 76
-    },
-
-    "data scientist": {
-        "skills": 90,
-        "growth": 90,
-        "flexibility": 92,
-        "risk": 76
-    },
-
-    "data analyst": {
-        "skills": 78,
-        "growth": 75,
-        "flexibility": 91,
-        "risk": 88
-    },
-
-    "software engineer": {
-        "skills": 92,
-        "growth": 92,
-        "flexibility": 94,
-        "risk": 78
-    },
-
-    "ai engineer": {
-        "skills": 97,
-        "growth": 96,
-        "flexibility": 86,
-        "risk": 67
-    }
-}
+# =====================================================
+# DYNAMIC SCORING
+# =====================================================
 
 
-def get_profile(option):
+def score_option(option,question,evidence):
 
-    normalized = normalize(option)
 
-    for name, profile in OPTION_PROFILES.items():
+    text=clean(question)
 
-        if name in normalized:
+    score=70
 
-            return profile
 
-    # Generic profile
-    return {
-        "skills": 78,
-        "growth": 78,
-        "flexibility": 78,
-        "risk": 78
+    opt=clean(option)
+
+
+    # evidence influence
+
+    for e in evidence:
+
+        if opt in e["content"]:
+            score+=5
+
+
+
+    # keyword intelligence
+
+    positive={
+
+        "future":10,
+
+        "career":10,
+
+        "growth":8,
+
+        "stable":8,
+
+        "easy":5,
+
+        "cheap":5,
+
+        "demand":8,
+
+        "popular":5
+
     }
 
 
-# ============================================================
-# OPTION SCORING
-# ============================================================
 
-def score_option(
-    option,
-    decision,
-    retrieved
-):
+    negative={
 
-    profile = get_profile(option)
+        "risk":-5,
 
-    objectives = detect_objectives(
-        decision
-    )
+        "expensive":-5,
 
-    weights = {
+        "difficult":-3
 
-        "growth": 1.0,
-
-        "skills": 1.0,
-
-        "flexibility": 0.85,
-
-        "risk": 0.85
     }
 
-    # Adjust weights based on actual question
-    if "income" in objectives:
-        weights["growth"] = 0.7
-        weights["risk"] = 0.8
 
-    if "cost" in objectives:
-        weights["risk"] = 1.0
 
-    if "time" in objectives:
-        weights["flexibility"] = 0.7
+    for k,v in positive.items():
 
-    weighted_total = 0
-    total_weight = 0
+        if k in text:
+            score+=v
 
-    for objective in objectives:
 
-        value = profile.get(
-            objective,
-            75
-        )
 
-        weight = weights.get(
-            objective,
-            0.8
-        )
+    for k,v in negative.items():
 
-        weighted_total += value * weight
-        total_weight += weight
+        if k in text:
+            score+=v
 
-    base_score = (
-        weighted_total / total_weight
-        if total_weight
-        else 75
+
+
+    # option complexity
+
+    score += min(
+        10,
+        len(option.split())
     )
 
-    # --------------------------------------------------------
-    # Evidence bonus
-    # --------------------------------------------------------
 
-    option_tokens = set(
-        tokenize(option)
-    )
-
-    evidence_bonus = 0
-
-    for item in retrieved:
-
-        evidence_text = normalize(
-            item.get(
-                "content",
-                ""
-            )
-        )
-
-        overlap = 0
-
-        for token in option_tokens:
-
-            if token in evidence_text:
-                overlap += 1
-
-        if overlap:
-            evidence_bonus += min(
-                3,
-                overlap * 0.75
-            )
-
-    final_score = min(
-        99,
-        base_score + evidence_bonus
-    )
 
     return round(
-        final_score,
+        max(40,min(score,98)),
         1
     )
 
 
-# ============================================================
-# DYNAMIC RECOMMENDATION
-# ============================================================
 
-def build_recommendation(
-    option_a,
-    option_b,
-    score_a,
-    score_b,
-    domain,
-    decision
-):
-
-    difference = abs(
-        score_a - score_b
-    )
-
-    if score_a > score_b:
-
-        winner = option_a
-        loser = option_b
-        winner_score = score_a
-        loser_score = score_b
-
-    else:
-
-        winner = option_b
-        loser = option_a
-        winner_score = score_b
-        loser_score = score_a
-
-    domain_text = {
-
-        "ml_ds":
-            "technical depth, model-building capability and long-term AI relevance",
-
-        "career":
-            "career alignment, skill development and long-term professional mobility",
-
-        "education":
-            "learning value, specialization and alignment with future goals",
-
-        "technology":
-            "technical suitability, maintainability and scalability",
-
-        "business":
-            "value creation, execution feasibility and long-term business potential",
-
-        "finance":
-            "expected value, downside risk and financial suitability",
-
-        "health":
-            "practical suitability, sustainability and potential benefit",
-
-        "general":
-            "objective alignment, feasibility, expected value and risk"
-    }.get(
-        domain,
-        "objective alignment, feasibility and risk"
-    )
-
-    if difference >= 12:
-
-        strength = "a clear advantage"
-
-    elif difference >= 6:
-
-        strength = "a meaningful advantage"
-
-    else:
-
-        strength = "a relatively narrow advantage"
-
-    recommendation = (
-        f"DecisionLens recommends **{winner}** over **{loser}**. "
-        f"{winner} scores {winner_score}/100 compared with "
-        f"{loser_score}/100, giving it {strength}. "
-        f"The decision was evaluated primarily using "
-        f"{domain_text}. "
-        f"The result should still be reconsidered if your "
-        f"constraints, priorities or available evidence change."
-    )
-
-    return recommendation, winner
+# =====================================================
+# GENERATE REPORT
+# =====================================================
 
 
-# ============================================================
-# DYNAMIC SUMMARY
-# ============================================================
+def analyze(question):
 
-def build_summary(
-    option_a,
-    option_b,
-    score_a,
-    score_b,
-    domain,
-    retrieved
-):
 
-    winner = (
-        option_a
-        if score_a >= score_b
-        else option_b
-    )
-
-    if score_a == score_b:
-
-        comparison = (
-            f"{option_a} and {option_b} produced similar "
-            f"overall scores."
-        )
-
-    else:
-
-        comparison = (
-            f"{winner} produced the stronger overall score."
-        )
-
-    evidence_text = (
-        f"{len(retrieved)} relevant knowledge-base "
-        f"record{'s' if len(retrieved) != 1 else ''} "
-        f"were retrieved."
-        if retrieved
-        else
-        "No directly matching knowledge-base evidence "
-        "was retrieved."
-    )
-
-    return (
-        f"DecisionLens classified this as a {domain.replace('_', ' ')} "
-        f"decision. {comparison} "
-        f"The comparison combines objective alignment, "
-        f"option characteristics and retrieved intelligence. "
-        f"{evidence_text}"
+    option1,option2=extract_options(
+        question
     )
 
 
-# ============================================================
-# DYNAMIC FACTORS
-# ============================================================
-
-def build_factors(
-    option_a,
-    option_b,
-    score_a,
-    score_b,
-    domain,
-    objectives
-):
-
-    winner = (
-        option_a
-        if score_a >= score_b
-        else option_b
+    evidence=retrieve(
+        question
     )
 
-    factors = [
-
-        f"Primary objective alignment favors {winner}",
-
-        f"{option_a} scored {score_a}/100 against "
-        f"{option_b} at {score_b}/100",
-
-        "The analysis considers the priorities expressed "
-        "in the decision rather than relying on a single metric",
-
-        "Long-term suitability and practical feasibility "
-        "are considered alongside potential upside"
-    ]
-
-    if "growth" in objectives:
-
-        factors.append(
-            "Long-term growth and progression were given additional weight"
-        )
-
-    if "skills" in objectives:
-
-        factors.append(
-            "Skill development and technical capability were emphasized"
-        )
-
-    if "risk" in objectives:
-
-        factors.append(
-            "Risk and uncertainty were explicitly considered"
-        )
-
-    return factors[:6]
 
 
-# ============================================================
-# RISKS
-# ============================================================
-
-def build_risks(
-    option_a,
-    option_b,
-    score_a,
-    score_b,
-    domain
-):
-
-    return [
-
-        f"The recommendation depends on the assumptions "
-        f"contained in the decision about {option_a} and {option_b}",
-
-        "Real-world outcomes can differ from the evidence "
-        "available in the knowledge base",
-
-        "A higher score does not eliminate execution or "
-        "implementation risk",
-
-        "Future changes in market, technology or personal "
-        "constraints could change the preferred option"
-    ]
+    if not option1 or not option2:
 
 
-# ============================================================
-# OPPORTUNITIES
-# ============================================================
+        return {
 
-def build_opportunities(
-    option_a,
-    option_b,
-    winner,
-    domain
-):
+        "confidence":55,
 
-    return [
+        "recommendation":
+        "DecisionLens requires two comparable options. Try asking with 'A vs B' format.",
 
-        f"{winner} can provide stronger alignment with the "
-        f"current decision objective",
+        "evidence":evidence
 
-        f"Combining useful capabilities from {option_a} and "
-        f"{option_b} may create additional future flexibility",
-
-        "The decision can be revisited as new evidence becomes available",
-
-        "Additional domain-specific evidence can improve future recommendations"
-    ]
+        }
 
 
-# ============================================================
-# TRADE-OFFS
-# ============================================================
 
-def build_tradeoffs(
-    option_a,
-    option_b,
-    score_a,
-    score_b
-):
-
-    return [
-
-        f"{option_a}: {score_a}/100 versus "
-        f"{option_b}: {score_b}/100",
-
-        "Higher potential value may require greater effort or risk",
-
-        "Specialization can improve depth while reducing some flexibility",
-
-        "A short-term advantage may not always produce the strongest "
-        "long-term outcome"
-    ]
-
-
-# ============================================================
-# CONFIDENCE
-# ============================================================
-
-def calculate_confidence(
-    decision,
-    option_a,
-    option_b,
-    score_a,
-    score_b,
-    retrieved
-):
-
-    difference = abs(
-        score_a - score_b
+    score1=score_option(
+        option1,
+        question,
+        evidence
     )
 
-    confidence = 58
 
-    # More specific decision
-    if len(decision.split()) >= 8:
-        confidence += 5
-
-    if len(decision.split()) >= 15:
-        confidence += 4
-
-    # Options successfully extracted
-    if option_a and option_b:
-        confidence += 8
-
-    # Evidence
-    if retrieved:
-        confidence += min(
-            12,
-            len(retrieved) * 3
-        )
-
-    # Separation between options
-    if difference >= 15:
-        confidence += 8
-
-    elif difference >= 10:
-        confidence += 6
-
-    elif difference >= 5:
-        confidence += 3
-
-    confidence = max(
-        50,
-        min(
-            95,
-            confidence
-        )
+    score2=score_option(
+        option2,
+        question,
+        evidence
     )
 
-    return int(confidence)
 
 
-# ============================================================
-# FALLBACK ANALYSIS
-# ============================================================
-
-def analyze_without_options(
-    decision,
-    domain,
-    retrieved
-):
-
-    domain_name = domain.replace(
-        "_",
-        " "
+    winner=(
+        option1
+        if score1>=score2
+        else option2
     )
 
-    recommendation = (
-        "Prioritize the path that most directly satisfies "
-        "your primary objective while remaining feasible "
-        "within your available time, resources and acceptable risk."
-    )
 
-    summary = (
-        f"DecisionLens classified this as a {domain_name} decision. "
-        f"The analysis evaluates objective alignment, feasibility, "
-        f"risk, expected value and available evidence."
-    )
 
-    factors = [
+    confidence=65
 
-        "Alignment with the primary objective",
 
-        "Expected practical value",
+    if evidence:
+        confidence+=10
 
-        "Time, cost and resource requirements",
 
-        "Feasibility within current constraints",
+    if abs(score1-score2)>10:
+        confidence+=10
 
-        "Long-term sustainability"
-    ]
 
-    risks = [
-
-        "Uncertainty in future outcomes",
-
-        "Opportunity cost",
-
-        "Execution or implementation risk",
-
-        "Changes in constraints or assumptions"
-    ]
-
-    opportunities = [
-
-        "Potential long-term value",
-
-        "Future flexibility",
-
-        "Additional learning or growth",
-
-        "Improved efficiency or outcomes"
-    ]
-
-    tradeoffs = [
-
-        "Short-term benefit versus long-term value",
-
-        "Risk versus potential return",
-
-        "Flexibility versus commitment",
-
-        "Cost versus expected benefit"
-    ]
-
-    confidence = 62
-
-    if retrieved:
-        confidence += min(
-            12,
-            len(retrieved) * 3
-        )
 
     return {
 
-        "decision":
-            decision,
 
-        "domain":
-            domain,
-
-        "recommended_option":
-            None,
-
-        "confidence":
-            min(
-                confidence,
-                90
-            ),
-
-        "option_scores":
-            {},
-
-        "recommendation":
-            recommendation,
-
-        "summary":
-            summary,
-
-        "factors":
-            factors,
-
-        "risks":
-            risks,
-
-        "opportunities":
-            opportunities,
-
-        "tradeoffs":
-            tradeoffs,
-
-        "evidence":
-            retrieved,
-
-        "evidence_count":
-            len(retrieved)
-    }
+    "decision":question,
 
 
-# ============================================================
-# MAIN DECISION ENGINE
-# ============================================================
+    "options":[
+        option1,
+        option2
+    ],
 
-def analyze_decision(decision):
 
-    domain = detect_domain(
-        decision
-    )
-
-    retrieved = retrieve(
-        decision,
-        limit=5
-    )
-
-    option_a, option_b = extract_options(
-        decision
-    )
-
-    # --------------------------------------------------------
-    # No clear two-option decision
-    # --------------------------------------------------------
-
-    if not option_a or not option_b:
-
-        return analyze_without_options(
-            decision,
-            domain,
-            retrieved
-        )
-
-    # --------------------------------------------------------
-    # Score both options
-    # --------------------------------------------------------
-
-    score_a = score_option(
-        option_a,
-        decision,
-        retrieved
-    )
-
-    score_b = score_option(
-        option_b,
-        decision,
-        retrieved
-    )
-
-    # --------------------------------------------------------
-    # Recommendation
-    # --------------------------------------------------------
-
-    recommendation, winner = build_recommendation(
-        option_a,
-        option_b,
-        score_a,
-        score_b,
-        domain,
-        decision
-    )
-
-    # --------------------------------------------------------
-    # Objectives
-    # --------------------------------------------------------
-
-    objectives = detect_objectives(
-        decision
-    )
-
-    # --------------------------------------------------------
-    # Summary
-    # --------------------------------------------------------
-
-    summary = build_summary(
-        option_a,
-        option_b,
-        score_a,
-        score_b,
-        domain,
-        retrieved
-    )
-
-    # --------------------------------------------------------
-    # Analysis sections
-    # --------------------------------------------------------
-
-    factors = build_factors(
-        option_a,
-        option_b,
-        score_a,
-        score_b,
-        domain,
-        objectives
-    )
-
-    risks = build_risks(
-        option_a,
-        option_b,
-        score_a,
-        score_b,
-        domain
-    )
-
-    opportunities = build_opportunities(
-        option_a,
-        option_b,
+    "recommended_option":
         winner,
-        domain
-    )
 
-    tradeoffs = build_tradeoffs(
-        option_a,
-        option_b,
-        score_a,
-        score_b
-    )
 
-    # --------------------------------------------------------
-    # Confidence
-    # --------------------------------------------------------
+    "confidence":
+        min(confidence,95),
 
-    confidence = calculate_confidence(
-        decision,
-        option_a,
-        option_b,
-        score_a,
-        score_b,
-        retrieved
-    )
 
-    # --------------------------------------------------------
-    # Final structured result
-    # --------------------------------------------------------
+    "option_scores":{
 
-    return {
+        option1:score1,
 
-        "decision":
-            decision,
+        option2:score2
 
-        "domain":
-            domain,
+    },
 
-        "options": [
 
-            option_a,
+    "recommendation":
 
-            option_b
-        ],
+    f"""
+DecisionLens recommends {winner}.
 
-        "recommended_option":
-            winner,
+Scores:
+{option1}: {score1}/100
+{option2}: {score2}/100
 
-        "confidence":
-            confidence,
+The recommendation considers:
+- objective alignment
+- feasibility
+- future value
+- risk
+- available evidence
 
-        "option_scores": {
+This decision should be revisited if priorities change.
+""",
 
-            option_a:
-                score_a,
 
-            option_b:
-                score_b
-        },
+    "factors":FACTORS,
 
-        "recommendation":
-            recommendation,
 
-        "summary":
-            summary,
+    "risks":[
 
-        "factors":
-            factors,
+    "Future conditions may change",
 
-        "risks":
-            risks,
+    "Limited evidence can affect confidence",
 
-        "opportunities":
-            opportunities,
+    "Execution quality influences outcomes"
 
-        "tradeoffs":
-            tradeoffs,
+    ],
 
-        "evidence":
-            retrieved,
 
-        "evidence_count":
-            len(retrieved),
+    "opportunities":[
 
-        "objectives":
-            objectives
+    "Potential growth",
+
+    "Skill improvement",
+
+    "Better long-term positioning"
+
+    ],
+
+
+    "tradeoffs":[
+
+    f"{option1} vs {option2}",
+
+    "Short term benefit vs long term value",
+
+    "Risk vs reward"
+
+    ],
+
+
+    "evidence":evidence,
+
+
+    "evidence_count":len(evidence)
+
+
     }
 
 
-# ============================================================
-# FRONTEND ROUTES
-# ============================================================
+
+# =====================================================
+# ROUTES
+# =====================================================
+
 
 @app.route("/")
 def home():
@@ -1408,139 +523,74 @@ def home():
     )
 
 
-@app.route("/dashboard.html")
-def dashboard():
+
+@app.route("/<path:file>")
+def files(file):
 
     return send_from_directory(
         FRONTEND_DIR,
-        "dashboard.html"
+        file
     )
 
 
-@app.route("/result.html")
-def result():
 
-    return send_from_directory(
-        FRONTEND_DIR,
-        "result.html"
+@app.route(
+"/api/analyze",
+methods=["POST"]
+)
+def api():
+
+
+    data=request.json
+
+
+    question=data.get(
+        "decision",
+        ""
     )
 
 
-@app.route("/<path:filename>")
-def frontend_files(filename):
+    if len(question)<5:
 
-    return send_from_directory(
-        FRONTEND_DIR,
-        filename
+        return jsonify(
+        {
+        "error":"Enter a valid decision"
+        }),400
+
+
+
+    return jsonify(
+        analyze(question)
     )
 
 
-# ============================================================
-# API HEALTH
-# ============================================================
 
 @app.route("/api/health")
 def health():
 
     return jsonify({
 
-        "status":
-            "online",
+    "status":"online",
 
-        "service":
-            "DecisionLens AI",
+    "engine":
+    "Universal Decision Intelligence",
 
-        "engine":
-            "RAG Decision Intelligence",
-
-        "knowledge_base":
-            len(KNOWLEDGE_BASE)
+    "knowledge":
+    len(KB)
 
     })
 
 
-# ============================================================
-# ANALYZE API
-# ============================================================
 
-@app.route(
-    "/api/analyze",
-    methods=["POST"]
-)
-def analyze():
+if __name__=="__main__":
 
-    try:
-
-        data = request.get_json(
-            silent=True
-        ) or {}
-
-        decision = str(
-            data.get(
-                "decision",
-                ""
-            )
-        ).strip()
-
-        if not decision:
-
-            return jsonify({
-
-                "error":
-                    "Decision text is required."
-
-            }), 400
-
-        if len(decision) < 5:
-
-            return jsonify({
-
-                "error":
-                    "Please provide a more detailed decision."
-
-            }), 400
-
-        result = analyze_decision(
-            decision
-        )
-
-        return jsonify(
-            result
-        )
-
-    except Exception as error:
-
-        print(
-            "ANALYSIS ERROR:",
-            repr(error)
-        )
-
-        return jsonify({
-
-            "error":
-                "The decision engine encountered an error.",
-
-            "details":
-                str(error)
-
-        }), 500
-
-
-# ============================================================
-# RUN
-# ============================================================
-
-if __name__ == "__main__":
-
-    port = int(
-        os.environ.get(
-            "PORT",
-            5000
-        )
-    )
 
     app.run(
         host="0.0.0.0",
-        port=port,
-        debug=False
+        port=int(
+            os.environ.get(
+                "PORT",
+               5000
+            )
+        )
     )
