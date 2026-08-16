@@ -6,29 +6,35 @@
 
 <meta charset="UTF-8">
 
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport"
+content="width=device-width,initial-scale=1.0">
+
 
 <title>
 DecisionLens AI
 </title>
 
 
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet"
+href="style.css">
 
 
 </head>
 
 
-<body>
 
+<body>
 
 
 <nav>
 
 
 <div class="logo">
+
 DECISION<span>LENS</span>
+
 </div>
+
 
 
 <div class="nav-links">
@@ -42,6 +48,7 @@ HOME
 WORKSPACE
 </a>
 
+
 </div>
 
 
@@ -51,36 +58,54 @@ WORKSPACE
 
 
 
-<section class="hero">
 
+
+<main class="hero">
+
+
+
+<section class="intro">
 
 
 <h1>
+
 AI DECISION
+
 <br>
+
 INTELLIGENCE ENGINE
+
 </h1>
 
 
 
 <p>
 
-DecisionLens analyzes your goals, context,
-risks and future possibilities to recommend
-the best path.
+DecisionLens analyzes your goals,
+context, risks and future possibilities
+to recommend the best path.
 
 </p>
 
 
 
+</section>
 
 
-<div class="input-card">
+
+
+
+
+
+<section class="card analyzer">
 
 
 <h2>
+
 What decision are you facing?
+
 </h2>
+
 
 
 
@@ -88,27 +113,16 @@ What decision are you facing?
 
 id="decisionInput"
 
-placeholder="
-Example:
+placeholder="Example:
 
-I am a physics student.
-Should I choose Machine Learning
-or Data Science for my career?
+Should I choose Machine Learning or Data Science?
 
-"
+Should I visit Africa or Asia?
+
+Should I start a business or take a job?"
 
 ></textarea>
 
-
-
-
-<button id="analyzeBtn">
-
-<span id="btnText">
-ANALYZE DECISION
-</span>
-
-</button>
 
 
 
@@ -117,11 +131,28 @@ ANALYZE DECISION
 
 
 
-</div>
+
+
+<button
+
+id="analyzeBtn"
+
+>
+
+
+<span id="btnText">
+
+ANALYZE DECISION →
+
+</span>
+
+
+</button>
 
 
 
 </section>
+
 
 
 
@@ -134,18 +165,25 @@ ANALYZE DECISION
 
 
 
-<div class="card">
 
-<h2>
+
+<div class="future-card">
+
+
+<h3>
+
 🧠 Context Intelligence
-</h2>
+
+</h3>
+
 
 <p>
 
-Understands your background,
-goals and priorities.
+Understands your goals,
+priorities and decision type.
 
 </p>
+
 
 </div>
 
@@ -153,18 +191,25 @@ goals and priorities.
 
 
 
-<div class="card">
 
-<h2>
+
+<div class="future-card">
+
+
+<h3>
+
 📊 Decision Simulation
-</h2>
+
+</h3>
+
 
 <p>
 
 Compares opportunities,
-risks and future outcomes.
+risks and possible outcomes.
 
 </p>
+
 
 </div>
 
@@ -173,20 +218,54 @@ risks and future outcomes.
 
 
 
-<div class="card">
 
-<h2>
-🚀 Future Projection
-</h2>
+<div class="future-card">
+
+
+<h3>
+
+🔮 Future Projection
+
+</h3>
+
 
 <p>
 
-Generates possible career
-and life paths.
+Simulates possible future paths
+before you decide.
 
 </p>
 
+
 </div>
+
+
+
+
+
+
+
+<div class="future-card">
+
+
+<h3>
+
+⚖ AI Reasoning
+
+</h3>
+
+
+<p>
+
+Explains why one choice
+fits better than another.
+
+</p>
+
+
+</div>
+
+
 
 
 
@@ -196,11 +275,220 @@ and life paths.
 
 
 
+</main>
 
-<script src="script.js"></script>
+
+
+
+
+
+
+
+
+<script>
+
+
+const analyzeBtn =
+document.getElementById(
+"analyzeBtn"
+);
+
+
+
+const input =
+document.getElementById(
+"decisionInput"
+);
+
+
+
+const btnText =
+document.getElementById(
+"btnText"
+);
+
+
+
+const errorBox =
+document.getElementById(
+"errorBox"
+);
+
+
+
+
+
+analyzeBtn.onclick = async function(){
+
+
+
+const decision =
+input.value.trim();
+
+
+
+
+if(!decision){
+
+
+errorBox.innerHTML =
+"Please enter your decision.";
+
+
+return;
+
+
+}
+
+
+
+
+btnText.innerHTML =
+"ANALYZING...";
+
+
+
+analyzeBtn.disabled=true;
+
+
+
+errorBox.innerHTML="";
+
+
+
+
+
+
+try{
+
+
+const response =
+await fetch(
+
+"/api/analyze",
+
+{
+
+
+method:"POST",
+
+
+headers:{
+
+
+"Content-Type":
+
+"application/json"
+
+
+},
+
+
+
+body:JSON.stringify({
+
+
+decision:decision
+
+
+})
+
+
+}
+
+
+);
+
+
+
+
+
+
+
+const data =
+await response.json();
+
+
+
+
+
+
+if(!response.ok){
+
+
+throw new Error(
+
+data.error ||
+
+"Analysis failed"
+
+);
+
+
+}
+
+
+
+
+
+
+localStorage.setItem(
+
+"decisionResult",
+
+JSON.stringify(data)
+
+);
+
+
+
+
+
+
+window.location.href =
+"/result.html";
+
+
+
+
+
+}
+
+catch(error){
+
+
+console.error(error);
+
+
+
+errorBox.innerHTML =
+error.message;
+
+
+
+btnText.innerHTML =
+"ANALYZE DECISION →";
+
+
+
+analyzeBtn.disabled=false;
+
+
+
+}
+
+
+
+};
+
+
+
+</script>
+
+
+
 
 
 </body>
-
 
 </html>
