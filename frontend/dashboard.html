@@ -1,115 +1,340 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Decision Workspace | DecisionLens</title>
-    <link rel="stylesheet" href="style.css">
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Decision Workspace | DecisionLens AI</title>
+
+<link rel="stylesheet" href="style.css">
+
 </head>
+
 
 <body>
 
+
 <nav class="navbar">
+
     <div class="brand">
         DECISION<span>LENS</span>
     </div>
 
+
     <div class="navlinks">
+
         <a href="/">Home</a>
-        <a class="active" href="dashboard.html">Workspace</a>
-        <a href="result.html">Results</a>
+
+        <a class="active" href="dashboard.html">
+            Workspace
+        </a>
+
+        <a href="result.html">
+            Results
+        </a>
+
     </div>
+
 </nav>
+
+
+
 
 
 <main class="workspace">
 
-    <div class="page-heading">
-        <div>
-            <div class="eyebrow">DECISION WORKSPACE</div>
-            <h1>What are you deciding?</h1>
-            <p>
-                Give the AI enough context to understand the decision,
-                compare alternatives and identify risks.
-            </p>
-        </div>
-
-        <div class="step">
-            01
-        </div>
-    </div>
 
 
-    <div class="decision-card">
-
-        <div class="card-top">
-            <span>YOUR DECISION</span>
-            <span class="status-dot">● AI READY</span>
-        </div>
-
-        <textarea
-            id="decisionInput"
-            placeholder="Example:
-
-Should I choose an ML Engineer role or continue with a PhD?
-
-Option A: ML Engineer
-Option B: PhD
-
-Goal: Long-term career growth
-Priority: Salary + research opportunities
-Constraint: Location"
-        ></textarea>
-
-        <div class="input-footer">
-            <span>
-                Describe the options, goal, priorities or constraints.
-            </span>
-
-            <span>
-                RAG ANALYSIS
-            </span>
-        </div>
-
-    </div>
+<section class="hero">
 
 
-    <div class="analysis-options">
-
-        <div class="mini-card">
-            <strong>TRADE-OFFS</strong>
-            <span>Compare alternatives</span>
-        </div>
-
-        <div class="mini-card">
-            <strong>RISKS</strong>
-            <span>Identify potential problems</span>
-        </div>
-
-        <div class="mini-card">
-            <strong>OPPORTUNITIES</strong>
-            <span>Find upside potential</span>
-        </div>
-
-    </div>
+<div>
 
 
-    <button id="analyzeBtn" class="analyze-btn">
-        <span id="btnText">ANALYZE DECISION</span>
-        <span class="arrow">→</span>
-    </button>
+<div class="eyebrow">
+DECISION WORKSPACE
+</div>
 
-    <div id="errorBox" class="error-box"></div>
+
+<h1>
+What decision are you trying to make?
+</h1>
+
+
+<p>
+Describe your options, your goal and what matters most.
+DecisionLens will analyze the situation and provide a personalized recommendation.
+</p>
+
+
+</div>
+
+
+
+<div class="step">
+
+01
+
+</div>
+
+
+</section>
+
+
+
+
+
+
+
+<section class="decision-card">
+
+
+<div class="card-header">
+
+
+<span>
+YOUR DECISION
+</span>
+
+
+<span class="ready">
+● AI READY
+</span>
+
+
+</div>
+
+
+
+
+
+<textarea
+
+id="decisionInput"
+
+placeholder="Example:
+
+
+Should I choose a Machine Learning Engineer job or continue with a PhD?
+
+
+My goal:
+Build a strong AI career.
+
+
+My priorities:
+Career growth, income, research opportunities.
+
+
+My constraints:
+Time, location, financial stability.
+
+
+OR
+
+
+Should I learn Python or Java for my career?
+
+"></textarea>
+
+
+
+
+
+<div class="input-guide">
+
+
+<div>
+
+<strong>
+Include:
+</strong>
+
+<br>
+
+• Options you are comparing
+
+<br>
+
+• Your goal
+
+<br>
+
+• Your priorities
+
+<br>
+
+• Your constraints
+
+
+</div>
+
+
+
+
+<div class="ai-tag">
+
+RAG + AI REASONING
+
+</div>
+
+
+
+</div>
+
+
+</section>
+
+
+
+
+
+
+
+
+
+<section class="analysis-grid">
+
+
+<div class="analysis-card">
+
+
+<div class="number">
+01
+</div>
+
+
+<h3>
+UNDERSTAND
+</h3>
+
+
+<p>
+AI identifies your decision context and compares the alternatives.
+</p>
+
+
+</div>
+
+
+
+
+
+<div class="analysis-card">
+
+
+<div class="number">
+02
+</div>
+
+
+<h3>
+REASON
+</h3>
+
+
+<p>
+Evaluates advantages, disadvantages and practical outcomes.
+</p>
+
+
+</div>
+
+
+
+
+
+<div class="analysis-card">
+
+
+<div class="number">
+03
+</div>
+
+
+<h3>
+ADVISE
+</h3>
+
+
+<p>
+Generates a recommendation tailored to your situation.
+</p>
+
+
+</div>
+
+
+
+</section>
+
+
+
+
+
+
+
+
+<button 
+id="analyzeBtn"
+class="analyze-btn">
+
+
+<span id="btnText">
+ANALYZE DECISION
+</span>
+
+
+<span>
+→
+</span>
+
+
+</button>
+
+
+
+
+
+<div 
+id="errorBox"
+class="error-box">
+</div>
+
+
+
+
 
 </main>
 
 
+
+
+
+
+
 <footer>
-    DECISIONLENS AI <span>•</span> DECISION INTELLIGENCE ENGINE
+
+DECISIONLENS AI
+
+<span>
+•
+</span>
+
+PERSONAL DECISION INTELLIGENCE ENGINE
+
 </footer>
+
+
+
 
 
 <script src="script.js"></script>
 
+
 </body>
+
 </html>
