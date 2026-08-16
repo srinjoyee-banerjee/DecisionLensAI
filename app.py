@@ -2,7 +2,9 @@
 # DECISIONLENS AI
 # UNIVERSAL AI DECISION ADVISOR
 # PERSONALIZED RAG DECISION REASONING ENGINE
+# FIXED VERSION
 # ============================================================
+
 
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
@@ -16,8 +18,8 @@ import re
 # APP CONFIG
 # ============================================================
 
-app = Flask(__name__)
 
+app = Flask(__name__)
 CORS(app)
 
 
@@ -43,10 +45,11 @@ KB_FILE = os.path.join(
 # LOAD KNOWLEDGE BASE
 # ============================================================
 
+
 def load_knowledge():
 
     if not os.path.exists(KB_FILE):
-        print("Knowledge base missing")
+        print("Knowledge base not found")
         return []
 
 
@@ -56,9 +59,9 @@ def load_knowledge():
             KB_FILE,
             "r",
             encoding="utf-8"
-        ) as file:
+        ) as f:
 
-            data = json.load(file)
+            data = json.load(f)
 
 
 
@@ -118,7 +121,6 @@ STOPWORDS = {
 "best",
 "choose",
 "choice",
-"option",
 "between",
 "or",
 "vs",
@@ -138,13 +140,7 @@ STOPWORDS = {
 
 def normalize(text):
 
-    return re.sub(
-        r"\s+",
-        " ",
-        str(text)
-        .lower()
-        .strip()
-    )
+    return str(text).lower().strip()
 
 
 
@@ -157,55 +153,44 @@ def tokenize(text):
 
 
     return [
-
-        word
-
-        for word in words
-
-        if word not in STOPWORDS
-
+        w
+        for w in words
+        if w not in STOPWORDS
     ]
-
 
 
 
 def extract_text(item):
 
     if isinstance(item,str):
-
         return item
-
 
 
     if isinstance(item,dict):
 
-        content=[]
+        parts=[]
 
 
         for key in [
-
             "title",
             "topic",
             "content",
             "text",
             "summary",
             "description"
-
         ]:
 
             if item.get(key):
 
-                content.append(
+                parts.append(
                     str(item[key])
                 )
 
 
-        return " ".join(content)
-
+        return " ".join(parts)
 
 
     return str(item)
-
 
 
 
@@ -222,7 +207,7 @@ def clean_option(text):
     )
 
 
-    remove=[
+    remove_patterns=[
 
         "should i",
         "should we",
@@ -235,10 +220,10 @@ def clean_option(text):
     ]
 
 
-    for item in remove:
+    for p in remove_patterns:
 
         text=re.sub(
-            item,
+            p,
             "",
             text,
             flags=re.I
@@ -255,15 +240,11 @@ def extract_options(question):
 
     patterns=[
 
-
         r"(.+?)\s+vs\.?\s+(.+)",
-
 
         r"between\s+(.+?)\s+and\s+(.+)",
 
-
         r"should i\s+(.+?)\s+or\s+(.+)",
-
 
         r"(.+?)\s+or\s+(.+)"
 
@@ -294,11 +275,8 @@ def extract_options(question):
             )
 
 
-            if (
-                len(a)>2
-                and
-                len(b)>2
-            ):
+
+            if len(a)>2 and len(b)>2:
 
                 return a,b
 
@@ -311,7 +289,7 @@ def extract_options(question):
 
 
 # ============================================================
-# DECISION CONTEXT
+# CONTEXT DETECTION
 # ============================================================
 
 
@@ -321,10 +299,24 @@ def detect_context(question):
     text=normalize(question)
 
 
-    contexts=[]
+    context=[]
+
 
 
     categories={
+
+
+        "technology":[
+
+            "python",
+            "java",
+            "coding",
+            "software",
+            "machine learning",
+            "ai",
+            "data science"
+
+        ],
 
 
         "career":[
@@ -332,59 +324,30 @@ def detect_context(question):
             "job",
             "career",
             "salary",
-            "role",
             "placement",
             "profession"
 
         ],
 
 
+        "creative":[
+
+            "dance",
+            "sing",
+            "music",
+            "art",
+            "creative"
+
+        ],
+
 
         "education":[
 
-            "phd",
-            "degree",
-            "master",
-            "college",
             "study",
+            "degree",
+            "phd",
+            "college",
             "research"
-
-        ],
-
-
-
-        "technology":[
-
-            "python",
-            "java",
-            "software",
-            "coding",
-            "programming",
-            "framework"
-
-        ],
-
-
-
-        "finance":[
-
-            "money",
-            "investment",
-            "stock",
-            "buy",
-            "loan",
-            "return"
-
-        ],
-
-
-
-        "business":[
-
-            "startup",
-            "business",
-            "company",
-            "product"
 
         ]
 
@@ -392,16 +355,13 @@ def detect_context(question):
 
 
 
-
     for category,words in categories.items():
-
 
         for word in words:
 
-
             if word in text:
 
-                contexts.append(
+                context.append(
                     category
                 )
 
@@ -409,14 +369,14 @@ def detect_context(question):
 
 
 
-    return contexts or ["general"]
+    return context or ["general"]
 
 
 
 
 
 # ============================================================
-# USER PRIORITY DETECTION
+# PRIORITY DETECTION
 # ============================================================
 
 
@@ -429,6 +389,7 @@ def detect_priorities(question):
     priorities=[]
 
 
+
     mapping={
 
 
@@ -436,50 +397,35 @@ def detect_priorities(question):
 
             "growth",
             "future",
-            "career",
-            "long term"
+            "career"
 
         ],
-
 
 
         "income":[
 
             "salary",
             "money",
-            "income",
-            "pay"
+            "income"
 
         ],
-
 
 
         "learning":[
 
             "learn",
             "skill",
-            "knowledge",
-            "research"
+            "knowledge"
 
         ],
 
 
+        "passion":[
 
-        "stability":[
-
-            "safe",
-            "stable",
-            "security"
-
-        ],
-
-
-
-        "flexibility":[
-
-            "flexible",
-            "options",
-            "freedom"
+            "love",
+            "passion",
+            "interest",
+            "happiness"
 
         ]
 
@@ -487,11 +433,10 @@ def detect_priorities(question):
 
 
 
+
     for key,words in mapping.items():
 
-
         for word in words:
-
 
             if word in text:
 
@@ -506,27 +451,19 @@ def detect_priorities(question):
     if not priorities:
 
         priorities=[
-
             "growth",
-            "learning",
             "future"
-
         ]
 
 
+
     return priorities
-
-
-
-
-
-# ============================================================
+    # ============================================================
 # RAG RETRIEVAL
 # ============================================================
 
 
 def retrieve_evidence(question):
-
 
     query=set(
         tokenize(question)
@@ -538,9 +475,7 @@ def retrieve_evidence(question):
 
     for item in KB:
 
-
         text=extract_text(item)
-
 
         tokens=set(
             tokenize(text)
@@ -554,11 +489,9 @@ def retrieve_evidence(question):
 
         if score>0:
 
-
             results.append({
 
                 "content":text,
-
                 "score":score
 
             })
@@ -566,115 +499,127 @@ def retrieve_evidence(question):
 
 
     results.sort(
-
         key=lambda x:x["score"],
-
         reverse=True
-
     )
 
 
     return results[:5]
-    # ============================================================
-# DECISION REASONING ENGINE
+
+
+
+
+
+# ============================================================
+# OPTION INTELLIGENCE SCORING
 # ============================================================
 
 
-def compare_option(option, priorities, context):
-
-    score = 50
-
-    text = normalize(option)
+def score_option(option, context, priorities):
 
 
-    for priority in priorities:
+    score=50
 
 
-        if priority == "growth":
-
-            score += 10
-
-
-        if priority == "learning":
-
-            score += 8
-
-
-        if priority == "income":
-
-            score += 7
-
-
-        if priority == "stability":
-
-            score += 5
-
-
-        if priority == "flexibility":
-
-            score += 6
+    text=normalize(option)
 
 
 
-    # domain signals
+    # Technology decisions
 
     if "technology" in context:
 
 
-        if any(
-            word in text
-            for word in [
-                "python",
-                "ai",
-                "machine learning",
-                "cloud"
-            ]
-        ):
+        if any(x in text for x in [
 
-            score += 12
+            "machine learning",
+            "ml",
+            "ai",
+            "python",
+            "data science",
+            "software",
+            "engineering"
+
+        ]):
+
+            score+=20
 
 
+
+    # Career decisions
 
     if "career" in context:
 
 
-        if any(
-            word in text
-            for word in [
-                "engineer",
-                "job",
-                "role",
-                "developer"
-            ]
-        ):
+        if any(x in text for x in [
 
-            score += 10
+            "engineer",
+            "developer",
+            "scientist",
+            "analyst"
 
+        ]):
+
+            score+=15
 
 
-    if "education" in context:
+
+    # Creative decisions
+
+    if "creative" in context:
 
 
-        if any(
-            word in text
-            for word in [
-                "phd",
-                "research",
-                "degree"
-            ]
-        ):
+        if any(x in text for x in [
 
-            score += 10
+            "dance",
+            "sing",
+            "music",
+            "art"
+
+        ]):
+
+            score+=10
+
+
+
+    # Priority matching
+
+    for p in priorities:
+
+
+        if p=="growth":
+
+            score+=8
+
+
+        if p=="income":
+
+            score+=8
+
+
+        if p=="learning":
+
+            score+=6
+
+
+        if p=="passion":
+
+            score+=8
 
 
 
     return min(
-        95,
-        score
+        score,
+        95
     )
 
 
 
+
+
+# ============================================================
+# DECISION GENERATOR
+# ============================================================
 
 
 def generate_analysis(
@@ -685,70 +630,96 @@ def generate_analysis(
 ):
 
 
-    context = detect_context(
+    context=detect_context(
         question
     )
 
 
-    priorities = detect_priorities(
+    priorities=detect_priorities(
         question
     )
 
 
 
-    score_a = compare_option(
+    score_a=score_option(
         option_a,
-        priorities,
-        context
+        context,
+        priorities
     )
 
 
-    score_b = compare_option(
+    score_b=score_option(
         option_b,
-        priorities,
-        context
+        context,
+        priorities
     )
 
 
 
-    if score_a >= score_b:
+    if score_a>=score_b:
 
-        winner = option_a
-        alternative = option_b
+        winner=option_a
+        loser=option_b
+
+        win_score=score_a
 
     else:
 
-        winner = option_b
-        alternative = option_a
+        winner=option_b
+        loser=option_a
 
+        win_score=score_b
+
+
+
+    confidence=70
+
+
+    if evidence:
+
+        confidence+=10
+
+
+    if abs(score_a-score_b)>15:
+
+        confidence+=10
 
 
 
     return {
 
 
-        "recommendation":winner,
+        "decision_intelligence":
+        question,
 
 
-        "summary":
-        (
-            f"Based on your goal, priorities and "
-            f"decision context, {winner} appears "
-            f"to be the better fit compared with "
-            f"{alternative}."
+        "recommendation":
+        winner,
+
+
+        "confidence":
+        min(
+            confidence,
+            95
         ),
+
+
+        "primary_reason":
+
+        f"{winner} matches your detected priorities "
+        f"({', '.join(priorities)}) better.",
 
 
 
         "why":[
 
-            f"{winner} aligns better with your current priorities.",
+            f"{winner} aligns better with your current objective.",
 
-            f"It provides stronger potential for "
+            f"It has stronger potential for "
             f"{', '.join(priorities)}.",
 
-            "The recommendation considers practical outcomes, "
-            "future opportunities and your stated situation."
+            "The recommendation considers long-term value, "
+            "opportunity and practical outcomes."
 
         ],
 
@@ -756,13 +727,12 @@ def generate_analysis(
 
         "why_not":[
 
-            f"{alternative} is still a valid option.",
+            f"{loser} is still a valid option.",
 
-            f"It may be better if your priority changes "
-            f"towards different goals.",
+            f"It may become better if your priorities change.",
 
-            "The limitation is that it may not match "
-            "your current objective as strongly."
+            "The current limitation is lower alignment "
+            "with your stated goal."
 
         ],
 
@@ -770,11 +740,9 @@ def generate_analysis(
 
         "advantages":[
 
-            f"{winner} advantage: stronger alignment "
-            "with your current direction.",
+            f"{winner}: stronger alignment with your goal.",
 
-            f"{alternative} advantage: offers different "
-            "benefits that may matter in another situation."
+            f"{loser}: provides alternative benefits."
 
         ],
 
@@ -782,11 +750,10 @@ def generate_analysis(
 
         "disadvantages":[
 
-            f"{winner} may require more commitment, "
-            "effort or adjustment.",
+            f"{winner} may require more commitment.",
 
-            f"{alternative} may have slower alignment "
-            "with your current goal."
+            f"{loser} may provide slower results "
+            "for this objective."
 
         ],
 
@@ -794,26 +761,13 @@ def generate_analysis(
 
         "tradeoffs":[
 
-            f"You are choosing between the strengths of "
-            f"{winner} and the benefits of {alternative}.",
+            "Short-term benefit versus long-term value.",
 
-            "The main trade-off is immediate benefit "
-            "versus long-term value.",
+            "Interest versus opportunity.",
 
-            "The best choice depends on which outcome "
-            "matters most to you."
+            "Comfort versus growth."
 
         ],
-
-
-
-        "final_advice":
-        (
-            f"If your main objective is {priorities[0]}, "
-            f"I would lean towards {winner}. "
-            f"However, reconsider {alternative} if "
-            "your priorities change."
-        ),
 
 
 
@@ -823,15 +777,7 @@ def generate_analysis(
 
             option_b:score_b
 
-        },
-
-
-        "confidence":
-
-        min(
-            95,
-            70 + (10 if evidence else 0)
-        )
+        }
 
     }
 
@@ -839,13 +785,18 @@ def generate_analysis(
 
 
 
+# ============================================================
+# MAIN ANALYSIS
+# ============================================================
+
 
 def analyze_decision(question):
 
 
-    option_a,option_b = extract_options(
+    option_a,option_b=extract_options(
         question
     )
+
 
 
     if not option_a or not option_b:
@@ -854,19 +805,18 @@ def analyze_decision(question):
         return {
 
             "error":
-            "Please provide two options. Example: Python vs Java"
+            "Please provide two options. Example: ML vs Data Science"
 
         }
 
 
 
-    evidence = retrieve_evidence(
+    evidence=retrieve_evidence(
         question
     )
 
 
-
-    result = generate_analysis(
+    result=generate_analysis(
 
         option_a,
 
@@ -890,9 +840,6 @@ def analyze_decision(question):
         option_b
 
     ]
-
-
-    result["evidence"]=evidence
 
 
     result["evidence_count"]=len(
@@ -921,7 +868,6 @@ def home():
 
 
 
-
 @app.route("/dashboard.html")
 def dashboard():
 
@@ -929,7 +875,6 @@ def dashboard():
         FRONTEND_DIR,
         "dashboard.html"
     )
-
 
 
 
@@ -943,9 +888,8 @@ def result():
 
 
 
-
 @app.route("/<path:file>")
-def files(file):
+def static_files(file):
 
     return send_from_directory(
         FRONTEND_DIR,
@@ -969,7 +913,7 @@ def health():
         "status":"online",
 
         "engine":
-        "Personal AI Decision Advisor",
+        "DecisionLens AI",
 
         "knowledge_records":
         len(KB)
@@ -996,23 +940,20 @@ def analyze_api():
 
 
         question=str(
-
             data.get(
                 "decision",
                 ""
             )
-
         ).strip()
 
 
 
         if len(question)<5:
 
-
             return jsonify({
 
                 "error":
-                "Please enter a decision."
+                "Please enter a decision"
 
             }),400
 
@@ -1034,16 +975,10 @@ def analyze_api():
     except Exception as e:
 
 
-        print(
-            "ENGINE ERROR:",
-            e
-        )
-
-
         return jsonify({
 
             "error":
-            "Decision engine failed.",
+            "Decision engine failed",
 
             "details":
             str(e)
@@ -1055,7 +990,7 @@ def analyze_api():
 
 
 # ============================================================
-# START
+# START SERVER
 # ============================================================
 
 
