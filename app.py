@@ -1,23 +1,29 @@
+# ============================================================
+# DECISIONLENS AI
+# UNIVERSAL AI DECISION ADVISOR
+# RAG POWERED DECISION REASONING ENGINE
+# ============================================================
+
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 
 import os
 import json
 import re
-import math
+import random
 
 
-# =====================================================
-# DECISIONLENS AI
-# UNIVERSAL DECISION INTELLIGENCE ENGINE
-# =====================================================
-
+# ============================================================
+# APP CONFIGURATION
+# ============================================================
 
 app = Flask(__name__)
 CORS(app)
 
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(
+    os.path.abspath(__file__)
+)
 
 FRONTEND_DIR = os.path.join(
     BASE_DIR,
@@ -31,12 +37,16 @@ KB_FILE = os.path.join(
 
 
 
-# =====================================================
+# ============================================================
 # LOAD KNOWLEDGE BASE
-# =====================================================
-
+# ============================================================
 
 def load_kb():
+
+    if not os.path.exists(KB_FILE):
+        print("Knowledge base not found")
+        return []
+
 
     try:
 
@@ -52,23 +62,29 @@ def load_kb():
         if isinstance(data,list):
             return data
 
+
         if isinstance(data,dict):
 
-            for k in [
+            for key in [
                 "documents",
                 "knowledge",
-                "data",
-                "items"
+                "entries",
+                "data"
             ]:
 
-                if k in data:
-                    return data[k]
+                if key in data:
+                    return data[key]
 
 
         return []
 
 
-    except Exception:
+    except Exception as e:
+
+        print(
+            "KB ERROR:",
+            e
+        )
 
         return []
 
@@ -78,48 +94,149 @@ KB = load_kb()
 
 
 
-# =====================================================
-# TEXT PROCESSING
-# =====================================================
+# ============================================================
+# TEXT UTILITIES
+# ============================================================
 
 
-STOPWORDS={
-"the","is","a","an","to",
-"for","and","or","should",
-"i","my","me","which",
-"better","best","choose",
-"between","vs","versus"
-}
+STOPWORDS=set([
+
+"the",
+"and",
+"for",
+"with",
+"should",
+"would",
+"could",
+"which",
+"what",
+"better",
+"best",
+"choose",
+"option",
+"between",
+"or",
+"vs",
+"versus",
+"is",
+"to",
+"of",
+"in",
+"a",
+"an",
+"my",
+"i"
+
+])
 
 
 
-def clean(text):
+def normalize(text):
 
     return re.sub(
         r"\s+",
         " ",
-        str(text).lower()
-    ).strip()
+        str(text)
+        .lower()
+        .strip()
+    )
 
 
 
-def tokens(text):
+def tokenize(text):
 
     words=re.findall(
         r"[a-zA-Z0-9+#.-]{3,}",
-        clean(text)
+        normalize(text)
     )
 
+
     return [
+
         w for w in words
+
         if w not in STOPWORDS
+
     ]
 
 
 
-# =====================================================
-# UNIVERSAL OPTION EXTRACTION
-# =====================================================
+def extract_text(item):
+
+    if isinstance(item,str):
+        return item
+
+
+    if isinstance(item,dict):
+
+        result=[]
+
+
+        for key in [
+            "title",
+            "topic",
+            "content",
+            "text",
+            "description",
+            "summary"
+        ]:
+
+            if item.get(key):
+
+                result.append(
+                    str(item[key])
+                )
+
+
+        return " ".join(result)
+
+
+    return str(item)
+
+
+
+
+# ============================================================
+# OPTION EXTRACTION
+# ============================================================
+
+
+def clean_option(value):
+
+    value=value.strip(
+        " ?.,"
+    )
+
+
+    remove_patterns=[
+
+        "should i",
+
+        "should we",
+
+        "which is better",
+
+        "what is better",
+
+        "choose",
+
+        "pick"
+
+    ]
+
+
+    for pattern in remove_patterns:
+
+        value=re.sub(
+            pattern,
+            "",
+            value,
+            flags=re.I
+        )
+
+
+    return value.strip()
+
 
 
 def extract_options(question):
@@ -127,13 +244,12 @@ def extract_options(question):
 
     patterns=[
 
-        r"(.+?)\s+vs\s+(.+)",
 
-        r"(.+?)\s+versus\s+(.+)",
+        r"(.+?)\s+vs\.?\s+(.+)",
+
 
         r"between\s+(.+?)\s+and\s+(.+)",
 
-        r"should i\s+(.+?)\s+or\s+(.+)",
 
         r"(.+?)\s+or\s+(.+)"
 
@@ -141,377 +257,651 @@ def extract_options(question):
     ]
 
 
-    for p in patterns:
 
-        m=re.search(
-            p,
+    for pattern in patterns:
+
+
+        match=re.search(
+            pattern,
             question,
             re.I
         )
 
 
-        if m:
-
-            a=m.group(1)
-            b=m.group(2)
+        if match:
 
 
-            a=re.sub(
-                r"^(choose|pick|take)\s+",
-                "",
-                a,
-                flags=re.I
+            a=clean_option(
+                match.group(1)
             )
 
 
-            return (
-                a.strip(" ?"),
-                b.strip(" ?")
+            b=clean_option(
+                match.group(2)
             )
+
+
+            if len(a)>2 and len(b)>2:
+
+                return a,b
+
 
 
     return None,None
 
 
 
-# =====================================================
+
+# ============================================================
+# CONTEXT DETECTION
+# ============================================================
+
+
+def detect_context(question):
+
+    text=normalize(question)
+
+
+    categories={
+
+
+        "career":[
+
+            "job",
+            "career",
+            "salary",
+            "mba",
+            "work",
+            "profession"
+
+        ],
+
+
+        "technology":[
+
+            "python",
+            "java",
+            "coding",
+            "software",
+            "programming"
+
+        ],
+
+
+        "finance":[
+
+            "money",
+            "stock",
+            "invest",
+            "loan",
+            "house"
+
+        ],
+
+
+        "education":[
+
+            "course",
+            "degree",
+            "study",
+            "college",
+            "master"
+
+        ],
+
+
+        "business":[
+
+            "startup",
+            "business",
+            "company"
+
+        ]
+
+    }
+
+
+
+    found=[]
+
+
+    for category,words in categories.items():
+
+        for word in words:
+
+            if word in text:
+
+                found.append(category)
+
+                break
+
+
+
+    return found or ["general"]
+
+
+
+
+
+# ============================================================
 # RAG RETRIEVAL
-# =====================================================
+# ============================================================
 
 
-def retrieve(question):
+def retrieve_evidence(question):
 
 
-    q=set(tokens(question))
+    query_tokens=set(
+        tokenize(question)
+    )
+
 
     results=[]
 
 
-    for doc in KB:
+
+    for item in KB:
 
 
-        text=json.dumps(
-            doc
-        ).lower()
+        text=extract_text(item)
 
 
-        score=0
+        tokens=set(
+            tokenize(text)
+        )
 
 
-        for word in q:
-
-            if word in text:
-                score+=1
-
-
-        if score:
+        match=len(
+            query_tokens.intersection(tokens)
+        )
 
 
-            results.append(
-                {
-                "content":text[:500],
-                "score":score
-                }
-            )
+        if match>0:
+
+
+            results.append({
+
+                "text":text,
+
+                "relevance":match
+
+            })
 
 
 
     results.sort(
-        key=lambda x:x["score"],
+
+        key=lambda x:x["relevance"],
+
         reverse=True
+
     )
 
 
     return results[:5]
+# ============================================================
+# DECISIONLENS AI
+# UNIVERSAL AI DECISION ADVISOR
+# RAG POWERED DECISION REASONING ENGINE
+# ============================================================
+
+from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
+
+import os
+import json
+import re
+import random
+
+
+# ============================================================
+# APP CONFIGURATION
+# ============================================================
+
+app = Flask(__name__)
+CORS(app)
+
+
+BASE_DIR = os.path.dirname(
+    os.path.abspath(__file__)
+)
+
+FRONTEND_DIR = os.path.join(
+    BASE_DIR,
+    "frontend"
+)
+
+KB_FILE = os.path.join(
+    BASE_DIR,
+    "knowledge_base.json"
+)
 
 
 
-# =====================================================
-# UNIVERSAL DECISION FACTORS
-# =====================================================
+# ============================================================
+# LOAD KNOWLEDGE BASE
+# ============================================================
+
+def load_kb():
+
+    if not os.path.exists(KB_FILE):
+        print("Knowledge base not found")
+        return []
 
 
-FACTORS=[
+    try:
 
-"cost",
+        with open(
+            KB_FILE,
+            "r",
+            encoding="utf-8"
+        ) as f:
 
-"time requirement",
+            data=json.load(f)
 
-"learning difficulty",
 
-"future growth",
+        if isinstance(data,list):
+            return data
 
-"risk",
 
-"flexibility",
+        if isinstance(data,dict):
 
-"practical usefulness",
+            for key in [
+                "documents",
+                "knowledge",
+                "entries",
+                "data"
+            ]:
 
-"long term value"
+                if key in data:
+                    return data[key]
 
+
+        return []
+
+
+    except Exception as e:
+
+        print(
+            "KB ERROR:",
+            e
+        )
+
+        return []
+
+
+
+KB = load_kb()
+
+
+
+# ============================================================
+# TEXT UTILITIES
+# ============================================================
+
+
+STOPWORDS=set([
+
+"the",
+"and",
+"for",
+"with",
+"should",
+"would",
+"could",
+"which",
+"what",
+"better",
+"best",
+"choose",
+"option",
+"between",
+"or",
+"vs",
+"versus",
+"is",
+"to",
+"of",
+"in",
+"a",
+"an",
+"my",
+"i"
+
+])
+
+
+
+def normalize(text):
+
+    return re.sub(
+        r"\s+",
+        " ",
+        str(text)
+        .lower()
+        .strip()
+    )
+
+
+
+def tokenize(text):
+
+    words=re.findall(
+        r"[a-zA-Z0-9+#.-]{3,}",
+        normalize(text)
+    )
+
+
+    return [
+
+        w for w in words
+
+        if w not in STOPWORDS
+
+    ]
+
+
+
+def extract_text(item):
+
+    if isinstance(item,str):
+        return item
+
+
+    if isinstance(item,dict):
+
+        result=[]
+
+
+        for key in [
+            "title",
+            "topic",
+            "content",
+            "text",
+            "description",
+            "summary"
+        ]:
+
+            if item.get(key):
+
+                result.append(
+                    str(item[key])
+                )
+
+
+        return " ".join(result)
+
+
+    return str(item)
+
+
+
+
+# ============================================================
+# OPTION EXTRACTION
+# ============================================================
+
+
+def clean_option(value):
+
+    value=value.strip(
+        " ?.,"
+    )
+
+
+    remove_patterns=[
+
+        "should i",
+
+        "should we",
+
+        "which is better",
+
+        "what is better",
+
+        "choose",
+
+        "pick"
+
+    ]
+
+
+    for pattern in remove_patterns:
+
+        value=re.sub(
+            pattern,
+            "",
+            value,
+            flags=re.I
+        )
+
+
+    return value.strip()
+
+
+
+def extract_options(question):
+
+
+    patterns=[
+
+
+        r"(.+?)\s+vs\.?\s+(.+)",
+
+
+        r"between\s+(.+?)\s+and\s+(.+)",
+
+
+        r"(.+?)\s+or\s+(.+)"
+
+
+    ]
+
+
+
+    for pattern in patterns:
+
+
+        match=re.search(
+            pattern,
+            question,
+            re.I
+        )
+
+
+        if match:
+
+
+            a=clean_option(
+                match.group(1)
+            )
+
+
+            b=clean_option(
+                match.group(2)
+            )
+
+
+            if len(a)>2 and len(b)>2:
+
+                return a,b
+
+
+
+    return None,None
+
+
+
+
+# ============================================================
+# CONTEXT DETECTION
+# ============================================================
+
+
+def detect_context(question):
+
+    text=normalize(question)
+
+
+    categories={
+
+
+        "career":[
+
+            "job",
+            "career",
+            "salary",
+            "mba",
+            "work",
+            "profession"
+
+        ],
+
+
+        "technology":[
+
+            "python",
+            "java",
+            "coding",
+            "software",
+            "programming"
+
+        ],
+
+
+        "finance":[
+
+            "money",
+            "stock",
+            "invest",
+            "loan",
+            "house"
+
+        ],
+
+
+        "education":[
+
+            "course",
+            "degree",
+            "study",
+            "college",
+            "master"
+
+        ],
+
+
+        "business":[
+
+            "startup",
+            "business",
+            "company"
+
+        ]
+
+    }
+
+
+
+    found=[]
+
+
+    for category,words in categories.items():
+
+        for word in words:
+
+            if word in text:
+
+                found.append(category)
+
+                break
+
+
+
+    return found or ["general"]
+
+
+
+
+
+# ============================================================
+# RAG RETRIEVAL
+# ============================================================
+
+
+def retrieve_evidence(question):
+
+
+    query_tokens=set(
+        tokenize(question)
+    )
+
+
+    results=[]
+
+
+
+    for item in KB:
+
+
+        text=extract_text(item)
+
+
+        tokens=set(
+            tokenize(text)
+        )
+
+
+        match=len(
+            query_tokens.intersection(tokens)
+        )
+
+
+        if match>0:
+
+
+            results.append({
+
+                "text":text,
+
+                "relevance":match
+
+            })
+
+
+
+    results.sort(
+
+        key=lambda x:x["relevance"],
+
+        reverse=True
+
+    )
+
+
+    return results[:5]
+{
+"recommendation":"Python",
+
+"why":[
+"Python aligns better with AI ecosystem and research adoption.",
+"Python matches more important factors considered.",
+"The recommendation considers practicality and future relevance."
+],
+
+"why_not":[
+"Java remains valuable for enterprise systems.",
+"Java may be preferable where performance and large systems matter."
+],
+
+"tradeoffs":[
+"Python: faster experimentation.",
+"Java: stronger enterprise stability."
 ]
-
-
-
-# =====================================================
-# DYNAMIC SCORING
-# =====================================================
-
-
-def score_option(option,question,evidence):
-
-
-    text=clean(question)
-
-    score=70
-
-
-    opt=clean(option)
-
-
-    # evidence influence
-
-    for e in evidence:
-
-        if opt in e["content"]:
-            score+=5
-
-
-
-    # keyword intelligence
-
-    positive={
-
-        "future":10,
-
-        "career":10,
-
-        "growth":8,
-
-        "stable":8,
-
-        "easy":5,
-
-        "cheap":5,
-
-        "demand":8,
-
-        "popular":5
-
-    }
-
-
-
-    negative={
-
-        "risk":-5,
-
-        "expensive":-5,
-
-        "difficult":-3
-
-    }
-
-
-
-    for k,v in positive.items():
-
-        if k in text:
-            score+=v
-
-
-
-    for k,v in negative.items():
-
-        if k in text:
-            score+=v
-
-
-
-    # option complexity
-
-    score += min(
-        10,
-        len(option.split())
-    )
-
-
-
-    return round(
-        max(40,min(score,98)),
-        1
-    )
-
-
-
-# =====================================================
-# GENERATE REPORT
-# =====================================================
-
-
-def analyze(question):
-
-
-    option1,option2=extract_options(
-        question
-    )
-
-
-    evidence=retrieve(
-        question
-    )
-
-
-
-    if not option1 or not option2:
-
-
-        return {
-
-        "confidence":55,
-
-        "recommendation":
-        "DecisionLens requires two comparable options. Try asking with 'A vs B' format.",
-
-        "evidence":evidence
-
-        }
-
-
-
-    score1=score_option(
-        option1,
-        question,
-        evidence
-    )
-
-
-    score2=score_option(
-        option2,
-        question,
-        evidence
-    )
-
-
-
-    winner=(
-        option1
-        if score1>=score2
-        else option2
-    )
-
-
-
-    confidence=65
-
-
-    if evidence:
-        confidence+=10
-
-
-    if abs(score1-score2)>10:
-        confidence+=10
-
-
-
-    return {
-
-
-    "decision":question,
-
-
-    "options":[
-        option1,
-        option2
-    ],
-
-
-    "recommended_option":
-        winner,
-
-
-    "confidence":
-        min(confidence,95),
-
-
-    "option_scores":{
-
-        option1:score1,
-
-        option2:score2
-
-    },
-
-
-    "recommendation":
-
-    f"""
-DecisionLens recommends {winner}.
-
-Scores:
-{option1}: {score1}/100
-{option2}: {score2}/100
-
-The recommendation considers:
-- objective alignment
-- feasibility
-- future value
-- risk
-- available evidence
-
-This decision should be revisited if priorities change.
-""",
-
-
-    "factors":FACTORS,
-
-
-    "risks":[
-
-    "Future conditions may change",
-
-    "Limited evidence can affect confidence",
-
-    "Execution quality influences outcomes"
-
-    ],
-
-
-    "opportunities":[
-
-    "Potential growth",
-
-    "Skill improvement",
-
-    "Better long-term positioning"
-
-    ],
-
-
-    "tradeoffs":[
-
-    f"{option1} vs {option2}",
-
-    "Short term benefit vs long term value",
-
-    "Risk vs reward"
-
-    ],
-
-
-    "evidence":evidence,
-
-
-    "evidence_count":len(evidence)
-
-
-    }
-
-
-
-# =====================================================
-# ROUTES
-# =====================================================
+}
+# ============================================================
+# FRONTEND ROUTES
+# ============================================================
 
 
 @app.route("/")
@@ -524,73 +914,207 @@ def home():
 
 
 
-@app.route("/<path:file>")
-def files(file):
+@app.route("/dashboard.html")
+def dashboard():
 
     return send_from_directory(
         FRONTEND_DIR,
-        file
+        "dashboard.html"
     )
 
 
 
-@app.route(
-"/api/analyze",
-methods=["POST"]
-)
-def api():
+@app.route("/result.html")
+def result():
 
-
-    data=request.json
-
-
-    question=data.get(
-        "decision",
-        ""
+    return send_from_directory(
+        FRONTEND_DIR,
+        "result.html"
     )
 
 
-    if len(question)<5:
 
-        return jsonify(
-        {
-        "error":"Enter a valid decision"
-        }),400
+@app.route("/<path:filename>")
+def frontend_files(filename):
 
-
-
-    return jsonify(
-        analyze(question)
+    return send_from_directory(
+        FRONTEND_DIR,
+        filename
     )
 
+
+
+
+
+# ============================================================
+# HEALTH CHECK
+# ============================================================
 
 
 @app.route("/api/health")
 def health():
 
+
     return jsonify({
 
-    "status":"online",
+        "status":
 
-    "engine":
-    "Universal Decision Intelligence",
+            "online",
 
-    "knowledge":
-    len(KB)
+
+        "service":
+
+            "DecisionLens AI",
+
+
+        "engine":
+
+            "Universal AI Decision Advisor",
+
+
+        "architecture":
+
+            "RAG Powered Decision Reasoning",
+
+
+        "knowledge_records":
+
+            len(KB)
 
     })
 
 
 
+
+
+# ============================================================
+# ANALYSIS API
+# ============================================================
+
+
+@app.route(
+    "/api/analyze",
+    methods=["POST"]
+)
+def analyze_api():
+
+    try:
+
+
+        data=request.get_json(
+            silent=True
+        ) or {}
+
+
+
+        question=str(
+
+            data.get(
+                "decision",
+                ""
+            )
+
+        ).strip()
+
+
+
+        if not question:
+
+
+            return jsonify({
+
+                "error":
+
+                "Please enter a decision."
+
+            }),400
+
+
+
+
+        if len(question)<8:
+
+
+            return jsonify({
+
+                "error":
+
+                "Please provide more details."
+
+            }),400
+
+
+
+
+
+        result=analyze_decision(
+            question
+        )
+
+
+
+        return jsonify(
+            result
+        )
+
+
+
+
+    except Exception as e:
+
+
+        print(
+            "ENGINE ERROR:",
+            e
+        )
+
+
+        return jsonify({
+
+            "error":
+
+            "Decision engine failed.",
+
+
+            "details":
+
+            str(e)
+
+        }),500
+
+
+
+
+
+
+# ============================================================
+# START SERVER
+# ============================================================
+
+
 if __name__=="__main__":
 
 
-    app.run(
-        host="0.0.0.0",
-        port=int(
-            os.environ.get(
-                "PORT",
-               5000
-            )
+    port=int(
+
+        os.environ.get(
+
+            "PORT",
+
+            5000
+
         )
+
+    )
+
+
+
+    app.run(
+
+        host="0.0.0.0",
+
+        port=port,
+
+        debug=False
+
     )
