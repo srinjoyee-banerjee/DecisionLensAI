@@ -1,224 +1,115 @@
-// ============================================================
-// DECISIONLENS AI
-// FRONTEND CONTROLLER
-// ============================================================
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decision Workspace | DecisionLens</title>
+    <link rel="stylesheet" href="style.css">
+</head>
 
+<body>
 
-const API_URL = "/api/analyze";
+<nav class="navbar">
+    <div class="brand">
+        DECISION<span>LENS</span>
+    </div>
 
+    <div class="navlinks">
+        <a href="/">Home</a>
+        <a class="active" href="dashboard.html">Workspace</a>
+        <a href="result.html">Results</a>
+    </div>
+</nav>
 
 
-// ============================================================
-// ANALYZE DECISION
-// ============================================================
+<main class="workspace">
 
+    <div class="page-heading">
+        <div>
+            <div class="eyebrow">DECISION WORKSPACE</div>
+            <h1>What are you deciding?</h1>
+            <p>
+                Give the AI enough context to understand the decision,
+                compare alternatives and identify risks.
+            </p>
+        </div>
 
-async function analyzeDecision(){
+        <div class="step">
+            01
+        </div>
+    </div>
 
 
-    const input =
-        document.getElementById(
-            "decisionInput"
-        );
+    <div class="decision-card">
 
+        <div class="card-top">
+            <span>YOUR DECISION</span>
+            <span class="status-dot">● AI READY</span>
+        </div>
 
-    if(!input){
+        <textarea
+            id="decisionInput"
+            placeholder="Example:
 
-        console.error(
-            "Decision input not found"
-        );
+Should I choose an ML Engineer role or continue with a PhD?
 
-        return;
+Option A: ML Engineer
+Option B: PhD
 
-    }
+Goal: Long-term career growth
+Priority: Salary + research opportunities
+Constraint: Location"
+        ></textarea>
 
+        <div class="input-footer">
+            <span>
+                Describe the options, goal, priorities or constraints.
+            </span>
 
+            <span>
+                RAG ANALYSIS
+            </span>
+        </div>
 
-    const decision =
-        input.value.trim();
+    </div>
 
 
+    <div class="analysis-options">
 
-    if(decision.length < 5){
+        <div class="mini-card">
+            <strong>TRADE-OFFS</strong>
+            <span>Compare alternatives</span>
+        </div>
 
-        alert(
-            "Please enter a proper decision."
-        );
+        <div class="mini-card">
+            <strong>RISKS</strong>
+            <span>Identify potential problems</span>
+        </div>
 
-        return;
+        <div class="mini-card">
+            <strong>OPPORTUNITIES</strong>
+            <span>Find upside potential</span>
+        </div>
 
-    }
+    </div>
 
 
+    <button id="analyzeBtn" class="analyze-btn">
+        <span id="btnText">ANALYZE DECISION</span>
+        <span class="arrow">→</span>
+    </button>
 
-    const button =
-        document.getElementById(
-            "analyzeBtn"
-        );
+    <div id="errorBox" class="error-box"></div>
 
+</main>
 
 
-    if(button){
+<footer>
+    DECISIONLENS AI <span>•</span> DECISION INTELLIGENCE ENGINE
+</footer>
 
-        button.innerHTML =
-        "ANALYZING...";
 
-        button.disabled=true;
+<script src="script.js"></script>
 
-    }
-
-
-
-    try{
-
-
-        const response =
-        await fetch(
-            API_URL,
-            {
-
-                method:"POST",
-
-                headers:{
-
-                    "Content-Type":
-                    "application/json"
-
-                },
-
-
-                body:
-                JSON.stringify({
-
-                    decision:decision
-
-                })
-
-            }
-        );
-
-
-
-        const data =
-        await response.json();
-
-
-
-        console.log(
-            "Decision Result:",
-            data
-        );
-
-
-
-        if(data.error){
-
-
-            alert(
-                data.error
-            );
-
-
-            return;
-
-        }
-
-
-
-
-        // SAVE RESULT FOR RESULT PAGE
-
-        localStorage.setItem(
-
-            "decisionResult",
-
-            JSON.stringify(data)
-
-        );
-
-
-
-        // MOVE TO REPORT
-
-        window.location.href =
-        "/result.html";
-
-
-
-    }
-
-
-
-    catch(error){
-
-
-        console.error(
-            error
-        );
-
-
-        alert(
-            "Unable to connect with DecisionLens AI."
-        );
-
-
-    }
-
-
-
-    finally{
-
-
-        if(button){
-
-            button.innerHTML =
-            "ANALYZE DECISION →";
-
-            button.disabled=false;
-
-        }
-
-
-    }
-
-
-}
-
-
-
-
-
-// ============================================================
-// PAGE LOAD
-// ============================================================
-
-
-document.addEventListener(
-"DOMContentLoaded",
-()=>{
-
-
-    const button =
-    document.getElementById(
-        "analyzeBtn"
-    );
-
-
-
-    if(button){
-
-
-        button.addEventListener(
-
-            "click",
-
-            analyzeDecision
-
-        );
-
-
-    }
-
-
-
-});
+</body>
+</html>
