@@ -1,192 +1,258 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-    const analyzeBtn = document.getElementById("analyzeBtn");
+    const analyzeBtn =
+        document.getElementById("analyzeBtn");
 
-    // ------------------------------------------------------------
+
+    // =========================================================
     // RESULT PAGE
-    // ------------------------------------------------------------
+    // =========================================================
 
     if (!analyzeBtn) {
+
         loadResults();
+
         return;
     }
 
 
-    // ------------------------------------------------------------
-    // INDEX PAGE ELEMENTS
-    // ------------------------------------------------------------
+    // =========================================================
+    // WORKSPACE ELEMENTS
+    // =========================================================
 
-    const input = document.getElementById("decisionInput");
-    const btnText = document.getElementById("btnText");
-    const errorBox = document.getElementById("errorBox");
+    const input =
+        document.getElementById("decisionInput");
+
+    const btnText =
+        document.getElementById("btnText");
+
+    const errorBox =
+        document.getElementById("errorBox");
 
 
-    // ------------------------------------------------------------
+    // =========================================================
     // ANALYZE BUTTON
-    // ------------------------------------------------------------
+    // =========================================================
 
-    analyzeBtn.addEventListener("click", async () => {
+    analyzeBtn.addEventListener(
+        "click",
+        async () => {
 
-        const decision = input ? input.value.trim() : "";
-
-
-        // Empty input
-        if (!decision) {
-
-            showError(
-                errorBox,
-                "Please describe the decision before starting the analysis."
-            );
-
-            if (input) {
-                input.focus();
-            }
-
-            return;
-        }
+            const decision =
+                input
+                    ? input.value.trim()
+                    : "";
 
 
-        hideError(errorBox);
+            // -------------------------------------------------
+            // VALIDATION
+            // -------------------------------------------------
 
+            if (!decision) {
 
-        // Loading state
-        setLoadingState(analyzeBtn, btnText, true);
-
-
-        try {
-
-            const response = await fetch("/api/analyze", {
-
-                method: "POST",
-
-                headers: {
-                    "Content-Type": "application/json",
-                    "Accept": "application/json"
-                },
-
-                body: JSON.stringify({
-                    decision: decision
-                })
-
-            });
-
-
-            // ----------------------------------------------------
-            // SAFE RESPONSE PARSING
-            // ----------------------------------------------------
-
-            let data;
-
-            const contentType =
-                response.headers.get("content-type") || "";
-
-            if (contentType.includes("application/json")) {
-
-                data = await response.json();
-
-            } else {
-
-                const text = await response.text();
-
-                throw new Error(
-                    text || "The server returned an invalid response."
+                showError(
+                    errorBox,
+                    "Please describe the decision before starting the analysis."
                 );
 
+                if (input) {
+                    input.focus();
+                }
+
+                return;
             }
 
 
-            // ----------------------------------------------------
-            // BACKEND ERROR
-            // ----------------------------------------------------
+            if (decision.length < 5) {
 
-            if (!response.ok) {
-
-                throw new Error(
-                    data.error ||
-                    data.message ||
-                    "Analysis failed."
+                showError(
+                    errorBox,
+                    "Please provide a more detailed decision."
                 );
 
+                return;
             }
 
 
-            // ----------------------------------------------------
-            // VALIDATE RESULT
-            // ----------------------------------------------------
-
-            if (!data || typeof data !== "object") {
-
-                throw new Error(
-                    "The AI returned an invalid analysis."
-                );
-
-            }
+            hideError(errorBox);
 
 
-            // ----------------------------------------------------
-            // SAVE RESULT
-            // ----------------------------------------------------
+            // -------------------------------------------------
+            // LOADING
+            // -------------------------------------------------
 
-            localStorage.setItem(
-                "decisionLensResult",
-                JSON.stringify(data)
-            );
-
-
-            // ----------------------------------------------------
-            // MOVE TO RESULT PAGE
-            // ----------------------------------------------------
-
-            window.location.href = "/result.html";
-
-        }
-
-
-        // --------------------------------------------------------
-        // ERROR HANDLING
-        // --------------------------------------------------------
-
-        catch (error) {
-
-            console.error(
-                "DecisionLens analysis error:",
-                error
-            );
-
-
-            showError(
-                errorBox,
-                "Analysis failed: " +
-                (error.message || "Please try again.")
-            );
-
-
-            // Restore button
             setLoadingState(
                 analyzeBtn,
                 btnText,
-                false
+                true
             );
 
-        }
 
-    });
+            try {
+
+                // -------------------------------------------------
+                // API REQUEST
+                // -------------------------------------------------
+
+                const response =
+                    await fetch(
+                        "/api/analyze",
+                        {
+
+                            method: "POST",
+
+                            headers: {
+
+                                "Content-Type":
+                                    "application/json",
+
+                                "Accept":
+                                    "application/json"
+                            },
+
+                            body:
+                                JSON.stringify({
+                                    decision:
+                                        decision
+                                })
+                        }
+                    );
+
+
+                // -------------------------------------------------
+                // RESPONSE
+                // -------------------------------------------------
+
+                const contentType =
+                    response.headers.get(
+                        "content-type"
+                    ) || "";
+
+
+                let data;
+
+
+                if (
+                    contentType.includes(
+                        "application/json"
+                    )
+                ) {
+
+                    data =
+                        await response.json();
+
+                } else {
+
+                    const text =
+                        await response.text();
+
+                    throw new Error(
+                        text ||
+                        "The server returned an invalid response."
+                    );
+
+                }
+
+
+                // -------------------------------------------------
+                // BACKEND ERROR
+                // -------------------------------------------------
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.error ||
+                        data.message ||
+                        "Analysis failed."
+                    );
+
+                }
+
+
+                // -------------------------------------------------
+                // VALIDATE
+                // -------------------------------------------------
+
+                if (
+                    !data ||
+                    typeof data !== "object"
+                ) {
+
+                    throw new Error(
+                        "The AI returned an invalid analysis."
+                    );
+
+                }
+
+
+                // -------------------------------------------------
+                // SAVE RESULT
+                // -------------------------------------------------
+
+                localStorage.setItem(
+                    "decisionLensResult",
+                    JSON.stringify(data)
+                );
+
+
+                // -------------------------------------------------
+                // GO TO RESULT PAGE
+                // -------------------------------------------------
+
+                window.location.href =
+                    "/result.html";
+
+            }
+
+
+            catch (error) {
+
+                console.error(
+                    "DecisionLens analysis error:",
+                    error
+                );
+
+
+                showError(
+                    errorBox,
+                    "Analysis failed: " +
+                    (
+                        error.message ||
+                        "Please try again."
+                    )
+                );
+
+
+                setLoadingState(
+                    analyzeBtn,
+                    btnText,
+                    false
+                );
+
+            }
+
+        }
+    );
 
 });
 
 
-
-// =================================================================
+// =============================================================
 // RESULT PAGE
-// =================================================================
+// =============================================================
 
 function loadResults() {
 
     const raw =
-        localStorage.getItem("decisionLensResult");
+        localStorage.getItem(
+            "decisionLensResult"
+        );
 
 
-    // No saved result
+    // ---------------------------------------------------------
+    // NO RESULT
+    // ---------------------------------------------------------
+
     if (!raw) {
 
         showNoResultState();
@@ -201,59 +267,69 @@ function loadResults() {
             JSON.parse(raw);
 
 
-        // ---------------------------------------------------------
-        // BASIC RESULT INFORMATION
-        // ---------------------------------------------------------
+        // -----------------------------------------------------
+        // BASIC DATA
+        // -----------------------------------------------------
 
         const decisionText =
-            document.getElementById("decisionText");
+            document.getElementById(
+                "decisionText"
+            );
+
 
         const recommendation =
-            document.getElementById("recommendation");
+            document.getElementById(
+                "recommendation"
+            );
+
 
         const summary =
-            document.getElementById("summary");
+            document.getElementById(
+                "summary"
+            );
+
 
         const confidence =
-            document.getElementById("confidence");
+            document.getElementById(
+                "confidence"
+            );
 
+
+        // -----------------------------------------------------
+        // DECISION
+        // -----------------------------------------------------
 
         if (decisionText) {
 
             decisionText.textContent =
-                data.decision || "No decision provided.";
+                data.decision ||
+                "No decision provided.";
 
         }
 
 
-        if (recommendation) {
-
-            recommendation.textContent =
-                data.recommendation ||
-                "No recommendation available.";
-
-        }
-
-
-        if (summary) {
-
-            summary.textContent =
-                data.summary ||
-                "No summary available.";
-
-        }
-
+        // -----------------------------------------------------
+        // CONFIDENCE
+        // -----------------------------------------------------
 
         if (confidence) {
 
             const confidenceValue =
-                Number(data.confidence);
+                Number(
+                    data.confidence
+                );
 
 
-            if (!Number.isNaN(confidenceValue)) {
+            if (
+                !Number.isNaN(
+                    confidenceValue
+                )
+            ) {
 
                 confidence.textContent =
-                    Math.round(confidenceValue) + "%";
+                    Math.round(
+                        confidenceValue
+                    ) + "%";
 
             } else {
 
@@ -265,9 +341,55 @@ function loadResults() {
         }
 
 
-        // ---------------------------------------------------------
-        // INTELLIGENCE LISTS
-        // ---------------------------------------------------------
+        // -----------------------------------------------------
+        // RECOMMENDED OPTION
+        // -----------------------------------------------------
+
+        renderRecommendedOption(
+            data
+        );
+
+
+        // -----------------------------------------------------
+        // RECOMMENDATION
+        // -----------------------------------------------------
+
+        if (recommendation) {
+
+            recommendation.innerHTML =
+                formatRecommendation(
+                    data.recommendation ||
+                    "No recommendation available."
+                );
+
+        }
+
+
+        // -----------------------------------------------------
+        // SUMMARY
+        // -----------------------------------------------------
+
+        if (summary) {
+
+            summary.textContent =
+                data.summary ||
+                "No summary available.";
+
+        }
+
+
+        // -----------------------------------------------------
+        // OPTION COMPARISON
+        // -----------------------------------------------------
+
+        renderOptionComparison(
+            data
+        );
+
+
+        // -----------------------------------------------------
+        // ANALYSIS LISTS
+        // -----------------------------------------------------
 
         renderList(
             "factors",
@@ -293,16 +415,16 @@ function loadResults() {
         );
 
 
-        // ---------------------------------------------------------
+        // -----------------------------------------------------
         // EVIDENCE
-        // ---------------------------------------------------------
+        // -----------------------------------------------------
 
         renderEvidence(
             data.evidence
         );
 
-    }
 
+    }
 
     catch (error) {
 
@@ -318,96 +440,77 @@ function loadResults() {
 }
 
 
+// =============================================================
+// RECOMMENDED OPTION
+// =============================================================
 
-// =================================================================
-// RENDER LIST
-// =================================================================
+function renderRecommendedOption(data) {
 
-function renderList(id, items) {
-
-    const element =
-        document.getElementById(id);
+    const optionElement =
+        document.getElementById(
+            "recommendedOption"
+        );
 
 
-    if (!element) {
-        return;
+    const scoreElement =
+        document.getElementById(
+            "winnerScore"
+        );
+
+
+    const winner =
+        data.recommended_option;
+
+
+    const scores =
+        data.option_scores || {};
+
+
+    if (optionElement) {
+
+        optionElement.textContent =
+            winner ||
+            "Decision requires further analysis.";
+
     }
 
 
-    element.innerHTML = "";
+    if (scoreElement) {
 
+        if (
+            winner &&
+            scores[winner] !== undefined
+        ) {
 
-    // -------------------------------------------------------------
-    // NORMALIZE DATA
-    // -------------------------------------------------------------
-
-    if (!Array.isArray(items)) {
-
-        items = [];
-
-    }
-
-
-    // -------------------------------------------------------------
-    // EMPTY LIST
-    // -------------------------------------------------------------
-
-    if (items.length === 0) {
-
-        const li =
-            document.createElement("li");
-
-        li.textContent =
-            "No major items identified.";
-
-        element.appendChild(li);
-
-        return;
-    }
-
-
-    // -------------------------------------------------------------
-    // CREATE ITEMS
-    // -------------------------------------------------------------
-
-    items.forEach(item => {
-
-        const li =
-            document.createElement("li");
-
-
-        if (typeof item === "object" && item !== null) {
-
-            li.textContent =
-                item.text ||
-                item.title ||
-                item.description ||
-                JSON.stringify(item);
+            scoreElement.textContent =
+                Math.round(
+                    Number(
+                        scores[winner]
+                    )
+                );
 
         } else {
 
-            li.textContent =
-                String(item);
+            scoreElement.textContent =
+                "—";
 
         }
 
-
-        element.appendChild(li);
-
-    });
+    }
 
 }
 
 
+// =============================================================
+// OPTION COMPARISON
+// =============================================================
 
-// =================================================================
-// RENDER EVIDENCE
-// =================================================================
-
-function renderEvidence(items) {
+function renderOptionComparison(data) {
 
     const container =
-        document.getElementById("evidenceList");
+        document.getElementById(
+            "optionComparison"
+        );
 
 
     if (!container) {
@@ -418,103 +521,514 @@ function renderEvidence(items) {
     container.innerHTML = "";
 
 
-    // -------------------------------------------------------------
-    // NORMALIZE DATA
-    // -------------------------------------------------------------
-
-    if (!Array.isArray(items)) {
-
-        items = [];
-
-    }
+    const scores =
+        data.option_scores || {};
 
 
-    // -------------------------------------------------------------
-    // NO EVIDENCE
-    // -------------------------------------------------------------
-
-    if (items.length === 0) {
-
-        const div =
-            document.createElement("div");
-
-        div.className =
-            "evidence-item";
+    const options =
+        Array.isArray(data.options)
+            ? data.options
+            : Object.keys(scores);
 
 
-        div.innerHTML = `
-            <strong>Decision knowledge base</strong>
-            <p>
-                No additional retrieved evidence was required
-                for this analysis.
-            </p>
+    if (!options.length) {
+
+        container.innerHTML = `
+            <div class="comparison-empty">
+                No direct option comparison was detected.
+            </div>
         `;
-
-
-        container.appendChild(div);
 
         return;
     }
 
 
-    // -------------------------------------------------------------
-    // EVIDENCE ITEMS
-    // -------------------------------------------------------------
-
-    items.forEach(item => {
-
-        const div =
-            document.createElement("div");
+    const winner =
+        data.recommended_option;
 
 
-        div.className =
-            "evidence-item";
+    options.forEach(
+        (option, index) => {
+
+            const score =
+                Number(
+                    scores[option]
+                );
 
 
-        const title =
-            item && typeof item === "object"
-                ? item.title ||
-                  item.source ||
-                  "Retrieved intelligence"
-                : "Retrieved intelligence";
+            const safeScore =
+                Number.isNaN(score)
+                    ? 0
+                    : Math.max(
+                        0,
+                        Math.min(
+                            100,
+                            score
+                        )
+                    );
 
 
-        const content =
-            item && typeof item === "object"
-                ? item.content ||
-                  item.text ||
-                  item.description ||
-                  ""
-                : String(item);
+            const card =
+                document.createElement(
+                    "div"
+                );
 
 
-        div.innerHTML = `
-            <strong>
-                ${escapeHTML(title)}
-            </strong>
-
-            <p>
-                ${escapeHTML(content)}
-            </p>
-        `;
+            card.className =
+                "option-card";
 
 
-        container.appendChild(div);
+            if (
+                option === winner
+            ) {
 
-    });
+                card.classList.add(
+                    "winner"
+                );
+
+            }
+
+
+            const badge =
+                option === winner
+                    ? `<span class="winner-badge">
+                            RECOMMENDED
+                       </span>`
+                    : `<span class="option-badge">
+                            OPTION ${index + 1}
+                       </span>`;
+
+
+            card.innerHTML = `
+
+                <div class="option-card-top">
+
+                    <div>
+
+                        ${badge}
+
+                        <h3>
+                            ${escapeHTML(option)}
+                        </h3>
+
+                    </div>
+
+                    <div class="option-score">
+
+                        <strong>
+                            ${Math.round(safeScore)}
+                        </strong>
+
+                        <span>
+                            /100
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="score-track">
+
+                    <div
+                        class="score-fill"
+                        style="width:${safeScore}%"
+                    ></div>
+
+                </div>
+
+            `;
+
+
+            container.appendChild(
+                card
+            );
+
+        }
+    );
 
 }
 
 
+// =============================================================
+// RECOMMENDATION FORMATTER
+// =============================================================
 
-// =================================================================
+function formatRecommendation(text) {
+
+    if (!text) {
+        return "";
+    }
+
+
+    let safe =
+        escapeHTML(text);
+
+
+    // Highlight option names marked with **
+    safe =
+        safe.replace(
+            /\*\*(.*?)\*\*/g,
+            "<strong>$1</strong>"
+        );
+
+
+    return safe;
+
+}
+
+
+// =============================================================
+// RENDER LIST
+// =============================================================
+
+function renderList(
+    id,
+    items
+) {
+
+    const element =
+        document.getElementById(
+            id
+        );
+
+
+    if (!element) {
+        return;
+    }
+
+
+    element.innerHTML = "";
+
+
+    if (!Array.isArray(items)) {
+        items = [];
+    }
+
+
+    if (items.length === 0) {
+
+        const li =
+            document.createElement(
+                "li"
+            );
+
+
+        li.textContent =
+            "No major items identified.";
+
+
+        element.appendChild(
+            li
+        );
+
+
+        return;
+    }
+
+
+    items.forEach(
+        item => {
+
+            const li =
+                document.createElement(
+                    "li"
+                );
+
+
+            if (
+                typeof item === "object" &&
+                item !== null
+            ) {
+
+                li.textContent =
+                    item.text ||
+                    item.title ||
+                    item.description ||
+                    JSON.stringify(item);
+
+            } else {
+
+                li.textContent =
+                    String(item);
+
+            }
+
+
+            element.appendChild(
+                li
+            );
+
+        }
+    );
+
+}
+
+
+// =============================================================
+// RENDER EVIDENCE
+// =============================================================
+
+function renderEvidence(items) {
+
+    const container =
+        document.getElementById(
+            "evidenceList"
+        );
+
+
+    const status =
+        document.getElementById(
+            "evidenceStatus"
+        );
+
+
+    const count =
+        document.getElementById(
+            "evidenceCount"
+        );
+
+
+    if (!container) {
+        return;
+    }
+
+
+    container.innerHTML = "";
+
+
+    if (!Array.isArray(items)) {
+        items = [];
+    }
+
+
+    // ---------------------------------------------------------
+    // COUNT
+    // ---------------------------------------------------------
+
+    if (count) {
+
+        count.textContent =
+            items.length +
+            (
+                items.length === 1
+                    ? " SOURCE"
+                    : " SOURCES"
+            );
+
+    }
+
+
+    // ---------------------------------------------------------
+    // NO EVIDENCE
+    // ---------------------------------------------------------
+
+    if (items.length === 0) {
+
+        if (status) {
+
+            status.textContent =
+                "No directly matching knowledge-base evidence was retrieved.";
+
+        }
+
+
+        const div =
+            document.createElement(
+                "div"
+            );
+
+
+        div.className =
+            "evidence-item empty";
+
+
+        div.innerHTML = `
+
+            <strong>
+                Decision knowledge base
+            </strong>
+
+            <p>
+                The recommendation was generated using
+                DecisionLens' decision-analysis framework.
+                No directly matching knowledge-base records
+                were found for this decision.
+            </p>
+
+        `;
+
+
+        container.appendChild(
+            div
+        );
+
+
+        return;
+    }
+
+
+    // ---------------------------------------------------------
+    // EVIDENCE FOUND
+    // ---------------------------------------------------------
+
+    if (status) {
+
+        status.textContent =
+            "Relevant knowledge-base intelligence was retrieved and considered.";
+
+    }
+
+
+    items.forEach(
+        (item, index) => {
+
+            const div =
+                document.createElement(
+                    "div"
+                );
+
+
+            div.className =
+                "evidence-item";
+
+
+            const title =
+                item &&
+                typeof item === "object"
+                    ? item.title ||
+                      item.source ||
+                      "Retrieved intelligence"
+                    : "Retrieved intelligence";
+
+
+            const content =
+                item &&
+                typeof item === "object"
+                    ? item.content ||
+                      item.text ||
+                      item.description ||
+                      ""
+                    : String(item);
+
+
+            const relevance =
+                item &&
+                typeof item === "object" &&
+                item.relevance !== undefined
+                    ? Number(
+                        item.relevance
+                    )
+                    : null;
+
+
+            const terms =
+                item &&
+                typeof item === "object" &&
+                Array.isArray(
+                    item.matched_terms
+                )
+                    ? item.matched_terms
+                    : [];
+
+
+            let relevanceHTML =
+                "";
+
+
+            if (
+                relevance !== null &&
+                !Number.isNaN(relevance)
+            ) {
+
+                relevanceHTML = `
+
+                    <span class="evidence-relevance">
+                        ${Math.round(relevance)}% MATCH
+                    </span>
+
+                `;
+
+            }
+
+
+            let termsHTML =
+                "";
+
+
+            if (terms.length) {
+
+                termsHTML = `
+
+                    <div class="matched-terms">
+
+                        ${terms
+                            .slice(0, 6)
+                            .map(
+                                term =>
+                                    `<span>
+                                        ${escapeHTML(term)}
+                                     </span>`
+                            )
+                            .join("")
+                        }
+
+                    </div>
+
+                `;
+
+            }
+
+
+            div.innerHTML = `
+
+                <div class="evidence-top">
+
+                    <div class="evidence-index">
+                        ${String(index + 1).padStart(2, "0")}
+                    </div>
+
+                    <div class="evidence-title">
+                        <strong>
+                            ${escapeHTML(title)}
+                        </strong>
+                    </div>
+
+                    ${relevanceHTML}
+
+                </div>
+
+
+                <p>
+                    ${escapeHTML(content)}
+                </p>
+
+
+                ${termsHTML}
+
+            `;
+
+
+            container.appendChild(
+                div
+            );
+
+        }
+    );
+
+}
+
+
+// =============================================================
 // HTML ESCAPE
-// =================================================================
+// =============================================================
 
 function escapeHTML(text) {
 
     const div =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
 
     div.textContent =
@@ -528,10 +1042,9 @@ function escapeHTML(text) {
 }
 
 
-
-// =================================================================
+// =============================================================
 // LOADING STATE
-// =================================================================
+// =============================================================
 
 function setLoadingState(
     button,
@@ -546,9 +1059,13 @@ function setLoadingState(
 
     if (loading) {
 
-        button.classList.add("loading");
+        button.classList.add(
+            "loading"
+        );
 
-        button.disabled = true;
+
+        button.disabled =
+            true;
 
 
         if (buttonText) {
@@ -558,11 +1075,17 @@ function setLoadingState(
 
         }
 
-    } else {
+    }
 
-        button.classList.remove("loading");
+    else {
 
-        button.disabled = false;
+        button.classList.remove(
+            "loading"
+        );
+
+
+        button.disabled =
+            false;
 
 
         if (buttonText) {
@@ -577,10 +1100,9 @@ function setLoadingState(
 }
 
 
-
-// =================================================================
+// =============================================================
 // ERROR DISPLAY
-// =================================================================
+// =============================================================
 
 function showError(
     errorBox,
@@ -602,12 +1124,13 @@ function showError(
 }
 
 
-
-// =================================================================
+// =============================================================
 // HIDE ERROR
-// =================================================================
+// =============================================================
 
-function hideError(errorBox) {
+function hideError(
+    errorBox
+) {
 
     if (!errorBox) {
         return;
@@ -624,27 +1147,62 @@ function hideError(errorBox) {
 }
 
 
-
-// =================================================================
+// =============================================================
 // NO RESULT STATE
-// =================================================================
+// =============================================================
 
 function showNoResultState() {
 
+    const decisionText =
+        document.getElementById(
+            "decisionText"
+        );
+
+
+    const recommendedOption =
+        document.getElementById(
+            "recommendedOption"
+        );
+
+
     const recommendation =
-        document.getElementById("recommendation");
+        document.getElementById(
+            "recommendation"
+        );
+
 
     const summary =
-        document.getElementById("summary");
+        document.getElementById(
+            "summary"
+        );
+
 
     const confidence =
-        document.getElementById("confidence");
+        document.getElementById(
+            "confidence"
+        );
+
+
+    if (decisionText) {
+
+        decisionText.textContent =
+            "No decision has been analyzed.";
+
+    }
+
+
+    if (recommendedOption) {
+
+        recommendedOption.textContent =
+            "No analysis available";
+
+    }
 
 
     if (recommendation) {
 
         recommendation.textContent =
-            "No analysis available.";
+            "Start a new decision analysis to generate a recommendation.";
 
     }
 
@@ -652,7 +1210,7 @@ function showNoResultState() {
     if (summary) {
 
         summary.textContent =
-            "Start a new decision analysis to generate your DecisionLens report.";
+            "Return to the workspace and enter a decision with two options to receive a comparative DecisionLens report.";
 
     }
 
@@ -664,21 +1222,34 @@ function showNoResultState() {
 
     }
 
+
+    renderOptionComparison({
+        options: [],
+        option_scores: {}
+    });
+
+
+    renderEvidence([]);
+
 }
 
 
-
-// =================================================================
+// =============================================================
 // RESULT ERROR STATE
-// =================================================================
+// =============================================================
 
 function showResultError() {
 
     const recommendation =
-        document.getElementById("recommendation");
+        document.getElementById(
+            "recommendation"
+        );
+
 
     const summary =
-        document.getElementById("summary");
+        document.getElementById(
+            "summary"
+        );
 
 
     if (recommendation) {
@@ -692,7 +1263,7 @@ function showResultError() {
     if (summary) {
 
         summary.textContent =
-            "The saved DecisionLens result could not be read. Please return and run the analysis again.";
+            "The saved DecisionLens result could not be read. Please return to Workspace and run the analysis again.";
 
     }
 
