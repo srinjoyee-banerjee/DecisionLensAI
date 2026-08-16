@@ -1,244 +1,699 @@
-function setExample(text){
+document.addEventListener("DOMContentLoaded", () => {
 
-const input =
-document.getElementById("decisionInput");
+    const analyzeBtn = document.getElementById("analyzeBtn");
 
-if(input){
+    // ------------------------------------------------------------
+    // RESULT PAGE
+    // ------------------------------------------------------------
 
-input.value=text;
-input.focus();
+    if (!analyzeBtn) {
+        loadResults();
+        return;
+    }
 
-}
 
-}
+    // ------------------------------------------------------------
+    // INDEX PAGE ELEMENTS
+    // ------------------------------------------------------------
 
+    const input = document.getElementById("decisionInput");
+    const btnText = document.getElementById("btnText");
+    const errorBox = document.getElementById("errorBox");
 
-function analyzeDecision(){
 
-const input =
-document.getElementById("decisionInput");
+    // ------------------------------------------------------------
+    // ANALYZE BUTTON
+    // ------------------------------------------------------------
 
-const decision =
-input.value.trim();
+    analyzeBtn.addEventListener("click", async () => {
 
+        const decision = input ? input.value.trim() : "";
 
-if(!decision){
 
-alert("Please enter a decision.");
+        // Empty input
+        if (!decision) {
 
-return;
+            showError(
+                errorBox,
+                "Please describe the decision before starting the analysis."
+            );
 
-}
+            if (input) {
+                input.focus();
+            }
 
+            return;
+        }
 
-sessionStorage.setItem(
-"decisionQuery",
-decision
-);
 
+        hideError(errorBox);
 
-window.location.href="/result.html";
 
-}
+        // Loading state
+        setLoadingState(analyzeBtn, btnText, true);
 
 
-async function loadResult(){
+        try {
 
-const query =
-sessionStorage.getItem(
-"decisionQuery"
-);
+            const response = await fetch("/api/analyze", {
 
+                method: "POST",
 
-const queryElement =
-document.getElementById("query");
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
 
+                body: JSON.stringify({
+                    decision: decision
+                })
 
-if(!queryElement || !query)
-return;
+            });
 
 
-queryElement.textContent=query;
+            // ----------------------------------------------------
+            // SAFE RESPONSE PARSING
+            // ----------------------------------------------------
 
+            let data;
 
-try{
+            const contentType =
+                response.headers.get("content-type") || "";
 
-const response =
-await fetch(
-"/api/analyze",
-{
+            if (contentType.includes("application/json")) {
 
-method:"POST",
+                data = await response.json();
 
-headers:{
-"Content-Type":
-"application/json"
-},
+            } else {
 
-body:JSON.stringify({
-query:query
-})
+                const text = await response.text();
 
-}
-);
+                throw new Error(
+                    text || "The server returned an invalid response."
+                );
 
+            }
 
-if(!response.ok){
 
-throw new Error(
-"API request failed"
-);
+            // ----------------------------------------------------
+            // BACKEND ERROR
+            // ----------------------------------------------------
 
-}
+            if (!response.ok) {
 
+                throw new Error(
+                    data.error ||
+                    data.message ||
+                    "Analysis failed."
+                );
 
-const data =
-await response.json();
+            }
 
 
-displayResult(data);
+            // ----------------------------------------------------
+            // VALIDATE RESULT
+            // ----------------------------------------------------
 
+            if (!data || typeof data !== "object") {
 
-}
+                throw new Error(
+                    "The AI returned an invalid analysis."
+                );
 
-catch(error){
+            }
 
-console.error(error);
 
-document.getElementById(
-"analysis"
-).textContent =
-"Unable to connect to DecisionLens AI. Please try again.";
+            // ----------------------------------------------------
+            // SAVE RESULT
+            // ----------------------------------------------------
 
-}
+            localStorage.setItem(
+                "decisionLensResult",
+                JSON.stringify(data)
+            );
 
-}
 
+            // ----------------------------------------------------
+            // MOVE TO RESULT PAGE
+            // ----------------------------------------------------
 
-function displayResult(data){
+            window.location.href = "/result.html";
 
-const analysis =
-data.recommendation ||
-data.response ||
-"";
+        }
 
 
-document.getElementById(
-"analysis"
-).textContent =
-analysis;
+        // --------------------------------------------------------
+        // ERROR HANDLING
+        // --------------------------------------------------------
 
+        catch (error) {
 
-const tools =
-data.tools_used || [];
+            console.error(
+                "DecisionLens analysis error:",
+                error
+            );
 
 
-const toolsContainer =
-document.getElementById(
-"tools"
-);
+            showError(
+                errorBox,
+                "Analysis failed: " +
+                (error.message || "Please try again.")
+            );
 
 
-toolsContainer.innerHTML="";
+            // Restore button
+            setLoadingState(
+                analyzeBtn,
+                btnText,
+                false
+            );
 
+        }
 
-tools.forEach(tool=>{
-
-const div =
-document.createElement(
-"div"
-);
-
-div.className="tool";
-
-div.textContent =
-"✓ " + tool;
-
-toolsContainer.appendChild(
-div
-);
+    });
 
 });
 
 
-const evidence =
-data.evidence || [];
+
+// =================================================================
+// RESULT PAGE
+// =================================================================
+
+function loadResults() {
+
+    const raw =
+        localStorage.getItem("decisionLensResult");
 
 
-const evidenceContainer =
-document.getElementById(
-"evidence"
-);
+    // No saved result
+    if (!raw) {
+
+        showNoResultState();
+
+        return;
+    }
 
 
-evidenceContainer.innerHTML="";
+    try {
+
+        const data =
+            JSON.parse(raw);
 
 
-evidence.forEach(item=>{
+        // ---------------------------------------------------------
+        // BASIC RESULT INFORMATION
+        // ---------------------------------------------------------
 
-const div =
-document.createElement(
-"div"
-);
+        const decisionText =
+            document.getElementById("decisionText");
 
-div.className =
-"evidence-item";
+        const recommendation =
+            document.getElementById("recommendation");
 
+        const summary =
+            document.getElementById("summary");
 
-div.innerHTML =
-"<div class='evidence-title'>" +
-item.title +
-"</div>" +
-
-"<div class='similarity'>" +
-"Similarity: " +
-Number(item.score).toFixed(3) +
-"</div>";
+        const confidence =
+            document.getElementById("confidence");
 
 
-evidenceContainer.appendChild(
-div
-);
+        if (decisionText) {
 
-});
+            decisionText.textContent =
+                data.decision || "No decision provided.";
+
+        }
 
 
-document.getElementById(
-"recommendation"
-).textContent =
-extractRecommendation(
-analysis
-);
+        if (recommendation) {
+
+            recommendation.textContent =
+                data.recommendation ||
+                "No recommendation available.";
+
+        }
+
+
+        if (summary) {
+
+            summary.textContent =
+                data.summary ||
+                "No summary available.";
+
+        }
+
+
+        if (confidence) {
+
+            const confidenceValue =
+                Number(data.confidence);
+
+
+            if (!Number.isNaN(confidenceValue)) {
+
+                confidence.textContent =
+                    Math.round(confidenceValue) + "%";
+
+            } else {
+
+                confidence.textContent =
+                    "—";
+
+            }
+
+        }
+
+
+        // ---------------------------------------------------------
+        // INTELLIGENCE LISTS
+        // ---------------------------------------------------------
+
+        renderList(
+            "factors",
+            data.factors
+        );
+
+
+        renderList(
+            "risks",
+            data.risks
+        );
+
+
+        renderList(
+            "opportunities",
+            data.opportunities
+        );
+
+
+        renderList(
+            "tradeoffs",
+            data.tradeoffs
+        );
+
+
+        // ---------------------------------------------------------
+        // EVIDENCE
+        // ---------------------------------------------------------
+
+        renderEvidence(
+            data.evidence
+        );
+
+    }
+
+
+    catch (error) {
+
+        console.error(
+            "Could not load DecisionLens result:",
+            error
+        );
+
+        showResultError();
+
+    }
 
 }
 
 
-function extractRecommendation(text){
 
-const match =
-text.match(
-/RECOMMENDATION[:\s]*([\s\S]*?)(?=KEY FACTORS|OPTION A|$)/i
-);
+// =================================================================
+// RENDER LIST
+// =================================================================
+
+function renderList(id, items) {
+
+    const element =
+        document.getElementById(id);
 
 
-if(match){
+    if (!element) {
+        return;
+    }
 
-return match[1].trim();
+
+    element.innerHTML = "";
+
+
+    // -------------------------------------------------------------
+    // NORMALIZE DATA
+    // -------------------------------------------------------------
+
+    if (!Array.isArray(items)) {
+
+        items = [];
+
+    }
+
+
+    // -------------------------------------------------------------
+    // EMPTY LIST
+    // -------------------------------------------------------------
+
+    if (items.length === 0) {
+
+        const li =
+            document.createElement("li");
+
+        li.textContent =
+            "No major items identified.";
+
+        element.appendChild(li);
+
+        return;
+    }
+
+
+    // -------------------------------------------------------------
+    // CREATE ITEMS
+    // -------------------------------------------------------------
+
+    items.forEach(item => {
+
+        const li =
+            document.createElement("li");
+
+
+        if (typeof item === "object" && item !== null) {
+
+            li.textContent =
+                item.text ||
+                item.title ||
+                item.description ||
+                JSON.stringify(item);
+
+        } else {
+
+            li.textContent =
+                String(item);
+
+        }
+
+
+        element.appendChild(li);
+
+    });
 
 }
 
 
-return "See complete AI analysis below.";
+
+// =================================================================
+// RENDER EVIDENCE
+// =================================================================
+
+function renderEvidence(items) {
+
+    const container =
+        document.getElementById("evidenceList");
+
+
+    if (!container) {
+        return;
+    }
+
+
+    container.innerHTML = "";
+
+
+    // -------------------------------------------------------------
+    // NORMALIZE DATA
+    // -------------------------------------------------------------
+
+    if (!Array.isArray(items)) {
+
+        items = [];
+
+    }
+
+
+    // -------------------------------------------------------------
+    // NO EVIDENCE
+    // -------------------------------------------------------------
+
+    if (items.length === 0) {
+
+        const div =
+            document.createElement("div");
+
+        div.className =
+            "evidence-item";
+
+
+        div.innerHTML = `
+            <strong>Decision knowledge base</strong>
+            <p>
+                No additional retrieved evidence was required
+                for this analysis.
+            </p>
+        `;
+
+
+        container.appendChild(div);
+
+        return;
+    }
+
+
+    // -------------------------------------------------------------
+    // EVIDENCE ITEMS
+    // -------------------------------------------------------------
+
+    items.forEach(item => {
+
+        const div =
+            document.createElement("div");
+
+
+        div.className =
+            "evidence-item";
+
+
+        const title =
+            item && typeof item === "object"
+                ? item.title ||
+                  item.source ||
+                  "Retrieved intelligence"
+                : "Retrieved intelligence";
+
+
+        const content =
+            item && typeof item === "object"
+                ? item.content ||
+                  item.text ||
+                  item.description ||
+                  ""
+                : String(item);
+
+
+        div.innerHTML = `
+            <strong>
+                ${escapeHTML(title)}
+            </strong>
+
+            <p>
+                ${escapeHTML(content)}
+            </p>
+        `;
+
+
+        container.appendChild(div);
+
+    });
 
 }
 
 
-if(
-window.location.pathname.endsWith(
-"result.html"
-)
-){
 
-loadResult();
+// =================================================================
+// HTML ESCAPE
+// =================================================================
+
+function escapeHTML(text) {
+
+    const div =
+        document.createElement("div");
+
+
+    div.textContent =
+        text == null
+            ? ""
+            : String(text);
+
+
+    return div.innerHTML;
+
+}
+
+
+
+// =================================================================
+// LOADING STATE
+// =================================================================
+
+function setLoadingState(
+    button,
+    buttonText,
+    loading
+) {
+
+    if (!button) {
+        return;
+    }
+
+
+    if (loading) {
+
+        button.classList.add("loading");
+
+        button.disabled = true;
+
+
+        if (buttonText) {
+
+            buttonText.textContent =
+                "AI ANALYZING";
+
+        }
+
+    } else {
+
+        button.classList.remove("loading");
+
+        button.disabled = false;
+
+
+        if (buttonText) {
+
+            buttonText.textContent =
+                "ANALYZE DECISION";
+
+        }
+
+    }
+
+}
+
+
+
+// =================================================================
+// ERROR DISPLAY
+// =================================================================
+
+function showError(
+    errorBox,
+    message
+) {
+
+    if (!errorBox) {
+        return;
+    }
+
+
+    errorBox.style.display =
+        "block";
+
+
+    errorBox.textContent =
+        message;
+
+}
+
+
+
+// =================================================================
+// HIDE ERROR
+// =================================================================
+
+function hideError(errorBox) {
+
+    if (!errorBox) {
+        return;
+    }
+
+
+    errorBox.style.display =
+        "none";
+
+
+    errorBox.textContent =
+        "";
+
+}
+
+
+
+// =================================================================
+// NO RESULT STATE
+// =================================================================
+
+function showNoResultState() {
+
+    const recommendation =
+        document.getElementById("recommendation");
+
+    const summary =
+        document.getElementById("summary");
+
+    const confidence =
+        document.getElementById("confidence");
+
+
+    if (recommendation) {
+
+        recommendation.textContent =
+            "No analysis available.";
+
+    }
+
+
+    if (summary) {
+
+        summary.textContent =
+            "Start a new decision analysis to generate your DecisionLens report.";
+
+    }
+
+
+    if (confidence) {
+
+        confidence.textContent =
+            "—";
+
+    }
+
+}
+
+
+
+// =================================================================
+// RESULT ERROR STATE
+// =================================================================
+
+function showResultError() {
+
+    const recommendation =
+        document.getElementById("recommendation");
+
+    const summary =
+        document.getElementById("summary");
+
+
+    if (recommendation) {
+
+        recommendation.textContent =
+            "Unable to load analysis.";
+
+    }
+
+
+    if (summary) {
+
+        summary.textContent =
+            "The saved DecisionLens result could not be read. Please return and run the analysis again.";
+
+    }
 
 }
