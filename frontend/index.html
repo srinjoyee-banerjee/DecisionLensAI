@@ -2,108 +2,276 @@
 <html lang="en">
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta charset="UTF-8">
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0">
+    <title>DecisionLens AI | Decision Intelligence</title>
 
-<title>DecisionLens AI</title>
-
-<link rel="stylesheet"
-href="style.css">
-
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<nav>
+<!-- =========================================================
+     NAVBAR
+========================================================= -->
 
-<div class="logo">
-DECISION<span>LENS</span>
-</div>
+<nav class="navbar">
 
-<div class="nav-label">
-RAG • LLM • AGENTIC AI
-</div>
+    <div class="brand">
+        <span class="brand-dark">DECISION</span><span class="brand-purple">LENS</span>
+    </div>
+
+    <div class="nav-status">
+        <span class="status-dot"></span>
+        AI SYSTEM ONLINE
+    </div>
 
 </nav>
 
 
+<!-- =========================================================
+     HERO
+========================================================= -->
+
 <main class="hero">
 
-<section class="hero-content">
+    <div class="hero-content">
 
-<div class="eyebrow">
-AI DECISION INTELLIGENCE
-</div>
+        <div class="eyebrow">
+            <span class="eyebrow-line"></span>
+            AI DECISION INTELLIGENCE
+        </div>
 
-<h1>
-Make better<br>
-<span>decisions.</span>
-</h1>
+        <h1>
+            Make better
+            <span>decisions.</span>
+        </h1>
 
-<p class="subtitle">
-
-Type a decision. DecisionLens retrieves
-relevant knowledge, selects AI tools,
-and generates an evidence-based analysis.
-
-</p>
-
-
-<div class="input-card">
-
-<label>
-WHAT ARE YOU DECIDING?
-</label>
-
-<textarea
-id="decisionInput"
-placeholder="Example: Should I learn Data Science or Machine Learning?"
-></textarea>
+        <p class="hero-description">
+            DecisionLens combines retrieval-augmented generation,
+            agentic reasoning and AI analysis to help you evaluate
+            complex choices with greater clarity.
+        </p>
 
 
-<button onclick="analyzeDecision()">
+        <!-- =====================================================
+             DECISION CARD
+        ====================================================== -->
 
-ANALYZE DECISION
+        <section class="decision-card">
 
-<span>→</span>
+            <div class="card-top">
 
-</button>
+                <div>
+                    <div class="card-label">
+                        DECISION WORKSPACE
+                    </div>
 
-</div>
+                    <h2>
+                        What are you deciding?
+                    </h2>
+                </div>
+
+                <div class="card-index">
+                    01
+                </div>
+
+            </div>
 
 
-<div class="examples">
+            <div class="input-wrapper">
 
-<span>TRY:</span>
+                <textarea
+                    id="query"
+                    placeholder="Example: Should I learn Data Science or Machine Learning?"
+                    rows="5"></textarea>
 
-<button onclick="setExample('Should I learn Python or Java?')">
-Python vs Java
-</button>
+                <div class="input-footer">
 
-<button onclick="setExample('Should a startup build or buy its software?')">
-Build vs Buy
-</button>
+                    <span>
+                        Describe the options, goal or problem you are evaluating.
+                    </span>
 
-<button onclick="setExample('Should I choose AWS or Azure for my startup?')">
-AWS vs Azure
-</button>
+                    <span class="char-count">
+                        AI ANALYSIS
+                    </span>
 
-</div>
+                </div>
 
-</section>
+            </div>
+
+
+            <button
+                id="analyzeBtn"
+                class="analyze-btn"
+                onclick="analyzeDecision()">
+
+                <span>ANALYZE DECISION</span>
+
+                <span class="arrow">→</span>
+
+            </button>
+
+
+            <!-- QUICK EXAMPLES -->
+
+            <div class="examples">
+
+                <span class="examples-label">
+                    TRY AN EXAMPLE
+                </span>
+
+                <button onclick="setQuery('Python vs Java')">
+                    Python vs Java
+                </button>
+
+                <button onclick="setQuery('Build vs Buy')">
+                    Build vs Buy
+                </button>
+
+                <button onclick="setQuery('AWS vs Azure')">
+                    AWS vs Azure
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             SYSTEM CAPABILITIES
+        ====================================================== -->
+
+        <section class="capabilities">
+
+            <div class="capability">
+
+                <div class="cap-number">
+                    01
+                </div>
+
+                <div>
+                    <h3>RAG</h3>
+                    <p>
+                        Retrieves relevant evidence from the knowledge base.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="capability">
+
+                <div class="cap-number purple">
+                    02
+                </div>
+
+                <div>
+                    <h3>AGENTIC AI</h3>
+                    <p>
+                        Selects the reasoning tools required for the decision.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="capability">
+
+                <div class="cap-number blue">
+                    03
+                </div>
+
+                <div>
+                    <h3>LLM ANALYSIS</h3>
+                    <p>
+                        Produces a structured recommendation and trade-offs.
+                    </p>
+                </div>
+
+            </div>
+
+        </section>
+
+    </div>
 
 </main>
 
 
+<!-- =========================================================
+     FOOTER
+========================================================= -->
+
 <footer>
-DECISIONLENS AI / DECISION INTELLIGENCE SYSTEM
+
+    <span>
+        DECISIONLENS AI
+    </span>
+
+    <span>
+        / DECISION INTELLIGENCE SYSTEM
+    </span>
+
+    <span class="footer-right">
+        RAG · LLM · AGENTIC AI
+    </span>
+
 </footer>
 
 
 <script src="script.js"></script>
 
-</body>
+<script>
 
+/* =========================================================
+   QUICK EXAMPLES
+========================================================= */
+
+function setQuery(text) {
+
+    const input = document.getElementById("query");
+
+    if (input) {
+
+        input.value = text;
+        input.focus();
+
+    }
+
+}
+
+
+/* =========================================================
+   ANALYZE
+========================================================= */
+
+function analyzeDecision() {
+
+    const input = document.getElementById("query");
+    const button = document.getElementById("analyzeBtn");
+
+    if (!input || !input.value.trim()) {
+
+        input.focus();
+
+        return;
+
+    }
+
+    button.classList.add("loading");
+
+    button.querySelector("span:first-child").textContent =
+        "ANALYZING...";
+
+    /*
+       If your existing script.js already contains
+       analyzeDecision(), it will handle the API request.
+    */
+
+}
+
+</script>
+
+</body>
 </html>
