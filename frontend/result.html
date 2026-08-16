@@ -1,443 +1,125 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Decision Report | DecisionLens AI</title>
-
-<link rel="stylesheet" href="style.css">
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decision Report | DecisionLens</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<!-- =========================================================
-     NAVIGATION
-========================================================= -->
-
-<nav>
-
-    <div class="logo">
+<nav class="navbar">
+    <div class="brand">
         DECISION<span>LENS</span>
-        <small>AI</small>
     </div>
 
-    <div class="nav-center">
-        <span class="nav-status">
-            <span class="live-dot"></span>
-            INTELLIGENCE ENGINE ONLINE
-        </span>
+    <div class="navlinks">
+        <a href="/">Home</a>
+        <a href="dashboard.html">Workspace</a>
+        <a class="active" href="result.html">Results</a>
     </div>
-
-    <a href="/" class="back">
-        ← NEW DECISION
-    </a>
-
 </nav>
 
 
-<!-- =========================================================
-     MAIN REPORT
-========================================================= -->
+<main class="results">
 
-<main class="report">
+    <div class="report-header">
 
-
-    <!-- HEADER -->
-
-    <header class="report-header">
-
-        <div class="eyebrow">
-            DECISION INTELLIGENCE
-            <span>/</span>
-            ANALYSIS REPORT
+        <div>
+            <div class="eyebrow">AI DECISION REPORT</div>
+            <h1>Decision Intelligence</h1>
+            <p id="decisionText">
+                Your decision analysis will appear here.
+            </p>
         </div>
 
-        <div class="title-row">
-
-            <div>
-
-                <h1>
-                    AI Decision
-                    <span>Analysis</span>
-                </h1>
-
-                <p class="subtitle">
-                    Evidence-driven recommendation generated through
-                    retrieval, reasoning and decision scoring.
-                </p>
-
-            </div>
-
-            <div class="report-badge">
-
-                <div class="badge-icon">
-                    ◈
-                </div>
-
-                <div>
-                    <strong>DECISION REPORT</strong>
-                    <span>AI GENERATED</span>
-                </div>
-
-            </div>
-
+        <div class="confidence">
+            <span>AI CONFIDENCE</span>
+            <strong id="confidence">—</strong>
         </div>
 
+    </div>
 
-        <!-- QUERY -->
 
-        <div class="query-box">
+    <section class="recommendation">
 
-            <div class="query-label">
-                ANALYZED DECISION
-            </div>
-
-            <div id="query">
-                Loading decision...
-            </div>
-
+        <div class="section-label">
+            RECOMMENDATION
         </div>
 
-    </header>
+        <h2 id="recommendation">
+            Analyzing...
+        </h2>
+
+        <p id="summary">
+            Generating your decision intelligence report.
+        </p>
+
+    </section>
 
 
-    <!-- =====================================================
-         TOP METRICS
-    ====================================================== -->
+    <section class="result-grid">
 
-    <section class="metrics">
-
-        <div class="metric-card">
-
-            <div class="metric-icon purple">
-                ◉
-            </div>
-
-            <div>
-                <span class="metric-label">
-                    EVIDENCE
-                </span>
-
-                <strong id="evidenceCount">
-                    —
-                </strong>
-            </div>
-
+        <div class="result-card">
+            <div class="result-number blue">01</div>
+            <h3>KEY FACTORS</h3>
+            <ul id="factors"></ul>
         </div>
 
-
-        <div class="metric-card">
-
-            <div class="metric-icon blue">
-                ◎
-            </div>
-
-            <div>
-                <span class="metric-label">
-                    AI ENGINE
-                </span>
-
-                <strong>
-                    ACTIVE
-                </strong>
-            </div>
-
+        <div class="result-card">
+            <div class="result-number red">02</div>
+            <h3>RISKS</h3>
+            <ul id="risks"></ul>
         </div>
 
-
-        <div class="metric-card">
-
-            <div class="metric-icon red">
-                ◇
-            </div>
-
-            <div>
-                <span class="metric-label">
-                    DECISION MODE
-                </span>
-
-                <strong>
-                    AGENTIC
-                </strong>
-            </div>
-
+        <div class="result-card">
+            <div class="result-number blue">03</div>
+            <h3>OPPORTUNITIES</h3>
+            <ul id="opportunities"></ul>
         </div>
 
-
-        <div class="metric-card">
-
-            <div class="metric-icon grey">
-                ✓
-            </div>
-
-            <div>
-                <span class="metric-label">
-                    REPORT STATUS
-                </span>
-
-                <strong>
-                    COMPLETE
-                </strong>
-            </div>
-
+        <div class="result-card">
+            <div class="result-number red">04</div>
+            <h3>TRADE-OFFS</h3>
+            <ul id="tradeoffs"></ul>
         </div>
 
     </section>
 
 
-    <!-- =====================================================
-         DASHBOARD
-    ====================================================== -->
+    <section class="evidence">
 
-    <section class="dashboard-grid">
-
-
-        <!-- RECOMMENDATION -->
-
-        <div class="panel recommendation">
-
-            <div class="panel-top">
-
-                <div class="panel-label">
-                    FINAL RECOMMENDATION
-                </div>
-
-                <span class="confidence-pill">
-                    AI ASSESSMENT
-                </span>
-
-            </div>
-
-
-            <div class="recommendation-content">
-
-                <div class="recommendation-mark">
-                    ✓
-                </div>
-
-                <div id="recommendation">
-                    Analyzing decision...
-                </div>
-
-            </div>
-
-
-            <div class="recommendation-footer">
-
-                <span>
-                    DecisionLens synthesis
-                </span>
-
-                <span>
-                    ● Generated
-                </span>
-
-            </div>
-
+        <div class="section-label">
+            RETRIEVED INTELLIGENCE
         </div>
 
-
-
-        <!-- AGENT TRACE -->
-
-        <div class="panel agent-panel">
-
-            <div class="panel-top">
-
-                <div class="panel-label">
-                    AGENT TRACE
-                </div>
-
-                <span class="trace-status">
-                    LIVE
-                </span>
-
-            </div>
-
-
-            <div id="tools" class="tools">
-
-                Loading...
-
-            </div>
-
-
-            <div class="trace-line"></div>
-
-            <div class="trace-info">
-
-                <span>
-                    Reasoning pipeline
-                </span>
-
-                <span>
-                    03 stages
-                </span>
-
-            </div>
-
-        </div>
-
-
-
-        <!-- AI ANALYSIS -->
-
-        <div class="panel wide analysis-panel">
-
-            <div class="panel-top">
-
-                <div class="panel-label">
-                    AI ANALYSIS
-                </div>
-
-                <span class="analysis-tag">
-                    RAG + LLM
-                </span>
-
-            </div>
-
-
-            <div id="analysis" class="analysis">
-
-                Loading analysis...
-
-            </div>
-
-        </div>
-
-
-
-        <!-- EVIDENCE -->
-
-        <div class="panel evidence-panel">
-
-            <div class="panel-top">
-
-                <div class="panel-label">
-                    RETRIEVED EVIDENCE
-                </div>
-
-                <span class="evidence-tag">
-                    KNOWLEDGE BASE
-                </span>
-
-            </div>
-
-
-            <div id="evidence">
-
-                Loading evidence...
-
-            </div>
-
-        </div>
-
-
-
-        <!-- SYSTEM -->
-
-        <div class="panel system-panel">
-
-            <div class="panel-top">
-
-                <div class="panel-label">
-                    SYSTEM STATUS
-                </div>
-
-                <span class="system-live">
-                    ONLINE
-                </span>
-
-            </div>
-
-
-            <div class="system-status">
-
-                <div class="system-item">
-
-                    <span class="status-icon purple-icon">
-                        R
-                    </span>
-
-                    <div>
-                        <strong>RAG ENGINE</strong>
-                        <span>Retrieval active</span>
-                    </div>
-
-                    <b>ACTIVE</b>
-
-                </div>
-
-
-                <div class="system-item">
-
-                    <span class="status-icon blue-icon">
-                        L
-                    </span>
-
-                    <div>
-                        <strong>LLM ENGINE</strong>
-                        <span>Reasoning active</span>
-                    </div>
-
-                    <b>ACTIVE</b>
-
-                </div>
-
-
-                <div class="system-item">
-
-                    <span class="status-icon red-icon">
-                        A
-                    </span>
-
-                    <div>
-                        <strong>AGENT ENGINE</strong>
-                        <span>Planning active</span>
-                    </div>
-
-                    <b>ACTIVE</b>
-
-                </div>
-
-            </div>
-
-        </div>
-
+        <div id="evidenceList"></div>
 
     </section>
 
 
-    <!-- =====================================================
-         FOOTER
-    ====================================================== -->
+    <div class="bottom-actions">
 
-    <footer>
+        <a href="dashboard.html" class="primary-btn">
+            NEW DECISION →
+        </a>
 
-        <div>
-            DECISION<span>LENS</span> AI
-        </div>
+        <a href="/" class="secondary-btn">
+            HOME
+        </a>
 
-        <div>
-            Retrieval-Augmented Decision Intelligence
-        </div>
-
-        <div>
-            SYSTEM v1.0
-        </div>
-
-    </footer>
-
+    </div>
 
 </main>
+
+
+<footer>
+    DECISIONLENS AI <span>•</span> RAG-POWERED DECISION SUPPORT
+</footer>
 
 
 <script src="script.js"></script>
 
 </body>
-
 </html>
