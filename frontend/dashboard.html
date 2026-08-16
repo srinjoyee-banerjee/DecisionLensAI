@@ -1,169 +1,137 @@
 <!DOCTYPE html>
+
 <html lang="en">
+
 
 <head>
 
+
 <meta charset="UTF-8">
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Decision Workspace | DecisionLens AI</title>
+<meta name="viewport"
+content="width=device-width,initial-scale=1.0">
 
-<link rel="stylesheet" href="style.css">
+
+<title>
+DecisionLens Workspace
+</title>
+
+
+<link rel="stylesheet"
+href="style.css">
+
 
 </head>
+
 
 
 <body>
 
 
-<nav class="navbar">
 
-<div class="brand">
+<nav>
+
+
+<div class="logo">
+
 DECISION<span>LENS</span>
-</div>
-
-
-<div class="navlinks">
-
-<a href="/">Home</a>
-
-<a class="active" href="dashboard.html">
-Workspace
-</a>
-
-<a href="result.html">
-Results
-</a>
 
 </div>
+
+
+<div class="nav-links">
+
+<a href="/">
+HOME
+</a>
+
+
+<a href="/dashboard.html">
+WORKSPACE
+</a>
+
+</div>
+
 
 </nav>
 
 
 
 
-<main class="workspace">
 
 
-<section class="hero">
 
-
-<div class="eyebrow">
-DECISION WORKSPACE
-</div>
+<main class="dashboard">
 
 
 <h1>
-What decision are you trying to make?
+
+DECISION INTELLIGENCE WORKSPACE
+
 </h1>
 
 
-<p>
-Describe your options, goals and priorities.
-DecisionLens AI will analyze the situation and provide a personalized recommendation.
-</p>
-
-
-</section>
 
 
 
+<section class="card">
 
 
-<section class="decision-card">
+<h2>
+How DecisionLens Works
+</h2>
 
 
-<div class="card-header">
+<div class="timeline-item">
 
-<span>
-YOUR DECISION
-</span>
+01
+
+<br>
+
+Understand your decision
+
+</div>
 
 
-<span class="ready">
-● AI READY
-</span>
 
+<div class="timeline-item">
+
+02
+
+<br>
+
+Analyze goals and priorities
 
 </div>
 
 
 
 
+<div class="timeline-item">
 
-<textarea
-
-id="decisionInput"
-
-placeholder="Example:
-
-
-Should I choose a Machine Learning Engineer job or continue with a PhD?
-
-
-Goal:
-Build a strong AI career.
-
-
-Priorities:
-Career growth, income, research opportunities.
-
-
-Constraints:
-Time, location, financial stability.
-
-
-OR
-
-
-Should I learn Python or Java for my career?
-
-"></textarea>
-
-
-
-
-
-<div class="input-guide">
-
-
-<div>
-
-<strong>
-Include:
-</strong>
+03
 
 <br>
 
-• Options you are comparing
-
-<br>
-
-• Your goal
-
-<br>
-
-• Your priorities
-
-<br>
-
-• Your constraints
-
+Generate simulations and recommendations
 
 </div>
 
 
 
 
-<div class="ai-tag">
+<div class="timeline-item">
 
-RAG + AI REASONING
+04
+
+<br>
+
+Visualize future possibilities
 
 </div>
 
 
-</div>
 
 
 </section>
@@ -174,22 +142,28 @@ RAG + AI REASONING
 
 
 
-<section class="analysis-grid">
+
+<section class="card">
+
+
+<h2>
+Decision Modules
+</h2>
 
 
 
-<div class="analysis-card">
-
+<div class="future-card">
 
 <h3>
-UNDERSTAND
+Context Engine
 </h3>
 
-
 <p>
-AI identifies your decision context and compares the available choices.
-</p>
 
+Detects domain, background,
+and user objectives.
+
+</p>
 
 </div>
 
@@ -197,18 +171,18 @@ AI identifies your decision context and compares the available choices.
 
 
 
-<div class="analysis-card">
-
+<div class="future-card">
 
 <h3>
-REASON
+Decision Matrix
 </h3>
 
-
 <p>
-Evaluates advantages, disadvantages, risks and possible outcomes.
-</p>
 
+Evaluates multiple factors
+instead of simple comparison.
+
+</p>
 
 </div>
 
@@ -216,18 +190,18 @@ Evaluates advantages, disadvantages, risks and possible outcomes.
 
 
 
-<div class="analysis-card">
-
+<div class="future-card">
 
 <h3>
-ADVISE
+Future Simulator
 </h3>
 
-
 <p>
-Generates a recommendation based on your priorities and situation.
-</p>
 
+Projects possible outcomes
+and trade-offs.
+
+</p>
 
 </div>
 
@@ -241,27 +215,41 @@ Generates a recommendation based on your priorities and situation.
 
 
 
-<button 
-id="analyzeBtn"
-class="analyze-btn">
+<section class="card">
 
 
-<span id="btnText">
-ANALYZE DECISION
-</span>
+<h2>
+
+Try DecisionLens
+
+</h2>
 
 
-<span>
-→
-</span>
+<p>
 
+Start analysing your career,
+education, finance or life decisions.
+
+</p>
+
+
+
+<a href="/">
+
+<button>
+
+START ANALYSIS
 
 </button>
 
+</a>
 
 
 
-<div id="errorBox" class="error-box"></div>
+</section>
+
+
+
 
 
 
@@ -272,25 +260,7 @@ ANALYZE DECISION
 
 
 
-<footer>
-
-DECISIONLENS AI
-
-<span>
-•
-</span>
-
-PERSONAL DECISION INTELLIGENCE ENGINE
-
-
-</footer>
-
-
-
-
-<script src="script.js"></script>
-
-
 </body>
+
 
 </html>
