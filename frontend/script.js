@@ -1,115 +1,155 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Decision Workspace | DecisionLens</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-
-<body>
-
-<nav class="navbar">
-    <div class="brand">
-        DECISION<span>LENS</span>
-    </div>
-
-    <div class="navlinks">
-        <a href="/">Home</a>
-        <a class="active" href="dashboard.html">Workspace</a>
-        <a href="result.html">Results</a>
-    </div>
-</nav>
+// ============================================================
+// DECISIONLENS AI
+// FRONTEND DECISION ANALYZER
+// ============================================================
 
 
-<main class="workspace">
-
-    <div class="page-heading">
-        <div>
-            <div class="eyebrow">DECISION WORKSPACE</div>
-            <h1>What are you deciding?</h1>
-            <p>
-                Give the AI enough context to understand the decision,
-                compare alternatives and identify risks.
-            </p>
-        </div>
-
-        <div class="step">
-            01
-        </div>
-    </div>
+const analyzeBtn = document.getElementById("analyzeBtn");
+const decisionInput = document.getElementById("decisionInput");
+const btnText = document.getElementById("btnText");
+const errorBox = document.getElementById("errorBox");
 
 
-    <div class="decision-card">
-
-        <div class="card-top">
-            <span>YOUR DECISION</span>
-            <span class="status-dot">● AI READY</span>
-        </div>
-
-        <textarea
-            id="decisionInput"
-            placeholder="Example:
-
-Should I choose an ML Engineer role or continue with a PhD?
-
-Option A: ML Engineer
-Option B: PhD
-
-Goal: Long-term career growth
-Priority: Salary + research opportunities
-Constraint: Location"
-        ></textarea>
-
-        <div class="input-footer">
-            <span>
-                Describe the options, goal, priorities or constraints.
-            </span>
-
-            <span>
-                RAG ANALYSIS
-            </span>
-        </div>
-
-    </div>
 
 
-    <div class="analysis-options">
 
-        <div class="mini-card">
-            <strong>TRADE-OFFS</strong>
-            <span>Compare alternatives</span>
-        </div>
-
-        <div class="mini-card">
-            <strong>RISKS</strong>
-            <span>Identify potential problems</span>
-        </div>
-
-        <div class="mini-card">
-            <strong>OPPORTUNITIES</strong>
-            <span>Find upside potential</span>
-        </div>
-
-    </div>
+if(analyzeBtn){
 
 
-    <button id="analyzeBtn" class="analyze-btn">
-        <span id="btnText">ANALYZE DECISION</span>
-        <span class="arrow">→</span>
-    </button>
-
-    <div id="errorBox" class="error-box"></div>
-
-</main>
+analyzeBtn.addEventListener(
+"click",
+async function(){
 
 
-<footer>
-    DECISIONLENS AI <span>•</span> DECISION INTELLIGENCE ENGINE
-</footer>
+let decision = decisionInput.value.trim();
 
 
-<script src="script.js"></script>
 
-</body>
-</html>
+if(!decision){
+
+
+errorBox.innerHTML =
+"Please describe your decision first.";
+
+return;
+
+}
+
+
+
+btnText.innerHTML =
+"ANALYZING...";
+
+analyzeBtn.disabled = true;
+
+
+
+errorBox.innerHTML = "";
+
+
+
+
+
+try{
+
+
+const response = await fetch(
+"/api/analyze",
+{
+
+method:"POST",
+
+headers:
+{
+"Content-Type":"application/json"
+},
+
+
+body:
+JSON.stringify(
+{
+decision:decision
+}
+)
+
+}
+
+);
+
+
+
+
+
+const data = await response.json();
+
+
+
+
+
+if(!response.ok){
+
+
+throw new Error(
+data.error ||
+"Analysis failed"
+);
+
+
+}
+
+
+
+
+
+
+// store result
+
+localStorage.setItem(
+"decisionResult",
+JSON.stringify(data)
+);
+
+
+
+
+// move to result page
+
+window.location.href =
+"result.html";
+
+
+
+
+
+}
+
+
+
+catch(error){
+
+
+console.error(
+error
+);
+
+
+
+errorBox.innerHTML =
+error.message;
+
+
+
+btnText.innerHTML =
+"ANALYZE DECISION";
+
+analyzeBtn.disabled=false;
+
+
+}
+
+
+
+});
+
+
+}
